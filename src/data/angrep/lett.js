@@ -2,6 +2,7 @@
 export default {
   id: 'lett',
   navn: 'Lett angrep',
-  skade: 3,
+  skade: 5,
   trinn: -2,
+  element: 'slag',
 };

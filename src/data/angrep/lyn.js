@@ -4,4 +4,5 @@ export default {
   type: 'endring',
   nivaa: 3,
   farge: 0xfff27a, // fargen på trolldommen i kampen
+  element: 'lyn',
 };

@@ -31,6 +31,7 @@ body { font-family: "Trebuchet MS", "Segoe UI", sans-serif; color: #f1e9dc; }
 }
 #kamp button:focus { outline: none; border-color: #e8c170; }
 #kamp button small { display: block; font-size: 0.75em; color: #a99fb0; }
+#kamp button:disabled { opacity: 0.45; cursor: default; }
 
 body:has(#kamp:not([hidden])) :is(#hint, #status) { display: none; }
 

@@ -22,25 +22,47 @@ export function oppgavetrinn(angrep, trinn) {
     .reduce((a, b) => (Math.abs(b - trinn) < Math.abs(a - trinn) ? b : a));
 }
 
-// Skaden måles mot elevens trinn: samme trinn gir 6 (som tungt), to under gir 3 (som lett).
-export const skadeFor = (oppgtrinn, trinn) => klemt(Math.round(6 + 1.5 * (oppgtrinn - trinn)), 2, 9);
+// Skaden måles mot elevens trinn: samme trinn gir 10 (som tungt), to under gir 5 (som lett).
+export const skadeFor = (oppgtrinn, trinn) => klemt(Math.round(10 + 2.5 * (oppgtrinn - trinn)), 4, 16);
 
-// Skaden mot en fiende. En fiende med skjold tar bare 1 fra lette slag og 2 ekstra fra typeangrep.
-export function skadeMot(angrep, fiende) {
-  if (!fiende.skjold) return angrep.skade;
-  if (angrep.id === 'lett') return 1;
-  return angrep.type ? angrep.skade + 2 : angrep.skade;
+// Hvor godt et angrep virker på en fiendetype: 2 mot svakheten, ½ mot det den tåler.
+// Eleven får aldri vite det, men ser det på tallet og hører det.
+export function virkning(angrep, type) {
+  if (type.svak?.includes(angrep.element)) return 2;
+  if (type.sterk?.includes(angrep.element)) return 0.5;
+  return 1;
+}
+
+// Skaden som står på knappen. Skjoldet ser man, svakhetene ikke.
+export const vistSkade = (angrep, type) => (type.skjold && angrep.id === 'lett' ? 1 : angrep.skade);
+
+// Skaden angrepet gjør på fienden. Et skjold gjør at lette slag bare gir 1.
+export function skadeMot(angrep, type) {
+  if (type.skjold && angrep.id === 'lett') return 1;
+  return Math.max(1, Math.round(angrep.skade * virkning(angrep, type)));
+}
+
+// Angrep med «hvile» kan ikke brukes de neste turene etter et treff.
+// «hviler» er { id: turer igjen }. Kalles etter hver tur helten tar.
+export function hvilEtter(hviler, angrep, traff) {
+  const ny = {};
+  for (const [id, n] of Object.entries(hviler)) if (n > 1) ny[id] = n - 1;
+  if (traff && angrep.hvile) ny[angrep.id] = angrep.hvile;
+  return ny;
 }
 
 // Typeangrep vises bare når oppgaven er høyst så mange trinn over eleven.
 export const MAKS_OVER = 2;
 
 // Angrepene eleven kan velge mellom: de faste, og de opplåste typeangrepene
-// som ligger nærmest elevens trinn. «bonus» er skade fra nivå og våpen.
+// som ligger nærmest elevens trinn. «bonus» er skade fra nivå og våpen, regnet
+// for et tungt slag (10). Andre angrep får like stor andel, så lett blir halvparten.
+// «kraft» gjør de sterkeste angrepene enda sterkere (de må hvile etterpå).
 export function angrepFor(nivaa, trinn, bonus = 0) {
   const klare = ANGREP.filter((a) => (a.nivaa ?? 1) <= nivaa).map((a) => {
     const t = oppgavetrinn(a, trinn);
-    return { ...a, oppgavetrinn: t, skade: (a.skade ?? skadeFor(t, trinn)) + bonus };
+    const grunn = (a.skade ?? skadeFor(t, trinn)) * (a.kraft ?? 1);
+    return { ...a, oppgavetrinn: t, skade: Math.round(grunn * (1 + bonus / 10)) };
   });
   const faste = klare.filter((a) => !a.type);
   const avstand = (a) => Math.abs(a.oppgavetrinn - trinn);

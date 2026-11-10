@@ -6,4 +6,5 @@ export default {
   type: 'prosentAv',
   nivaa: 2,
   farge: 0xff8a2a, // fargen på trolldommen i kampen
+  element: 'ild',
 };

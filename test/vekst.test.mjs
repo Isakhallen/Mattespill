@@ -73,7 +73,7 @@ test('kampen viser opptil fire angrep, aldri altfor vanskelige', () => {
   }
   assert.equal(angrepFor(1, 5).length, 2);
   assert.equal(angrepFor(6, 9).length, 4);
-  assert.equal(angrepFor(1, 5, 3)[0].skade, 3 + 3);
+  assert.equal(angrepFor(1, 5, 3)[0].skade, Math.round(5 * 1.3));
 });
 
 test('feil på for vanskelig oppgave og rett på altfor lett teller ikke', () => {
@@ -93,8 +93,8 @@ test('kistene gir utstyr i rekkefølge, og det beste brukes', () => {
   assert.equal(nesteUtstyr(eier), null);
   const s = lagSpiller({ utstyr: ['sverd', 'rustentSverd', 'laervest'] });
   assert.equal(beste(s.utstyr, 'vaapen').id, 'sverd');
-  assert.equal(skadeBonus(s), 2);
-  assert.equal(maksLiv(s), helt.maksLiv + 4);
+  assert.equal(skadeBonus(s), 4);
+  assert.equal(maksLiv(s), helt.maksLiv + 6);
 });
 
 test('lagringen kan skrives og leses igjen', () => {

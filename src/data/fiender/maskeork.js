@@ -4,7 +4,9 @@ export default {
   navn: 'Maskeork',
   bestemt: 'Maskeorken',
   figur: 'masked_orc',
-  liv: 22,
-  skade: 3,
+  liv: 50,
+  skade: 5,
   erfaring: 10,
+  svak: ['is'],
+  sterk: ['slag'],
 };

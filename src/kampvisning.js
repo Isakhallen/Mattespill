@@ -31,7 +31,7 @@ export function lagKampvisning(spill) {
   spill.scale.on('resize', plasser);
 
   const ferdig = (i) => {
-    if (!los || !valg.children[i]) return;
+    if (!los || !valg.children[i] || valg.children[i].disabled) return;
     const svar = los;
     los = null;
     valg.replaceChildren();
@@ -45,7 +45,7 @@ export function lagKampvisning(spill) {
   // Tastene skal ikke nå spillet. 1 og 2 velger, pilene flytter mellom knappene.
   rot.addEventListener('keydown', (e) => {
     e.stopPropagation();
-    const knapper = [...valg.children];
+    const knapper = [...valg.children].filter((k) => !k.disabled);
     if (/^[1-9]$/.test(e.key)) ferdig(Number(e.key) - 1);
     const d = { ArrowLeft: -1, ArrowRight: 1 }[e.key];
     if (d && knapper.length) {
@@ -73,13 +73,15 @@ export function lagKampvisning(spill) {
     si(tekst) {
       el('.melding').textContent = tekst;
     },
-    // Viser knapper og gir nummeret på den eleven velger. valg: [{ navn, under }]
+    // Viser knapper og gir nummeret på den eleven velger. valg: [{ navn, under, av }]
+    // «av» gir en grå knapp som ikke kan velges.
     velg(liste) {
       valg.replaceChildren(
         ...liste.map((v) => {
           const knapp = document.createElement('button');
           knapp.type = 'button';
           knapp.append(v.navn);
+          knapp.disabled = !!v.av;
           if (v.under) {
             const under = document.createElement('small');
             under.textContent = v.under;
@@ -88,7 +90,7 @@ export function lagKampvisning(spill) {
           return knapp;
         }),
       );
-      valg.firstChild.focus();
+      valg.querySelector('button:not(:disabled)')?.focus();
       return new Promise((r) => {
         los = r;
       });

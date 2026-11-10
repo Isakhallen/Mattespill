@@ -4,7 +4,8 @@ export default {
   navn: 'Ork',
   bestemt: 'Orken',
   figur: 'orc_warrior',
-  liv: 18,
-  skade: 3,
+  liv: 45,
+  skade: 5,
   erfaring: 8,
+  svak: ['lyn'],
 };

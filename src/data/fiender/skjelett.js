@@ -4,7 +4,9 @@ export default {
   navn: 'Skjelett',
   bestemt: 'Skjelettet',
   figur: 'skelet',
-  liv: 12,
-  skade: 2,
+  liv: 40,
+  skade: 4,
   erfaring: 5,
+  svak: ['slag'],
+  sterk: ['is'],
 };

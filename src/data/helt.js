@@ -3,6 +3,6 @@
 export default {
   navn: 'Helt',
   figur: 'knight_m',
-  maksLiv: 20,
-  perNivaa: { liv: 4, skade: 0.5 },
+  maksLiv: 30,
+  perNivaa: { liv: 6, skade: 2 },
 };

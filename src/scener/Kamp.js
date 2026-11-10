@@ -1,5 +1,5 @@
 import { gulvnavn } from '../tegnKart.js';
-import { angrepFor, skadeMot, nyKamp, runde, teller } from '../kamp.js';
+import { angrepFor, skadeMot, vistSkade, virkning, hvilEtter, nyKamp, runde, teller } from '../kamp.js';
 import { nivaa, maksLiv, skadeBonus } from '../vekst.js';
 import { lagOppgave, MAKS_TRINN } from '../oppgaver.js';
 import { oppdater } from '../tilpasning.js';
@@ -45,21 +45,26 @@ export default class Kamp extends Phaser.Scene {
     const maks = maksLiv(spiller);
     const n = nivaa(spiller.erfaring);
     const bonus = skadeBonus(spiller);
-    let k = nyKamp(spiller.liv, fiende.liv, type.skade);
+    let k = nyKamp(spiller.liv, fiende.liv, fiende.skade);
     let rette = 0;
+    let hviler = {}; // angrep som hviler: { id: turer igjen }
     const visLiv = () => {
       visning.liv('helt', k.heltLiv, maks);
-      visning.liv('fiende', k.fiendeLiv, type.liv);
+      visning.liv('fiende', k.fiendeLiv, fiende.maks);
     };
-    visning.aapne(spiller.navn, type.navn);
+    visning.aapne(`${spiller.navn} · Nivå ${n}`, `${type.navn} · Nivå ${fiende.nivaa}`);
     visLiv();
     visning.si('Velg angrep.');
 
     let forrige = null;
     while (!k.utfall) {
       const trinn = spiller.tilpasning.trinn;
-      const liste = angrepFor(n, trinn, bonus).map((a) => ({ ...a, skade: skadeMot(a, type) }));
-      const valg = liste.map((a) => ({ navn: a.navn, under: `${a.skade} skade` }));
+      const liste = angrepFor(n, trinn, bonus);
+      const valg = liste.map((a) => ({
+        navn: a.navn,
+        under: hviler[a.id] ? `Hviler ${hviler[a.id]}` : `${vistSkade(a, type)} skade`,
+        av: !!hviler[a.id],
+      }));
       const angrep = liste[await visning.velg(valg)];
       const oppgave = lagOppgave(angrep.oppgavetrinn, Math.random, forrige);
       forrige = oppgave.tekst;
@@ -69,9 +74,12 @@ export default class Kamp extends Phaser.Scene {
       if (teller(angrep.oppgavetrinn, trinn, rett)) {
         spiller.tilpasning = oppdater(spiller.tilpasning, rett, MAKS_TRINN);
       }
-      k = runde(k, angrep, rett);
+      k = runde(k, { ...angrep, skade: skadeMot(angrep, type) }, rett);
+      hviler = hvilEtter(hviler, angrep, rett);
 
-      await this.heltSlaar(angrep, rett, k.traff);
+      // Svakheten vises bare med et stort tall og en egen lyd. Skjold og det fienden tåler, gir et lite tall.
+      const v = type.skjold && angrep.id === 'lett' ? 0.5 : virkning(angrep, type);
+      await this.heltSlaar(angrep, rett, k.traff, v > 1 ? 'svak' : v < 1 ? 'preller' : null);
       const mitt = rett ? `Treff! −${k.traff}.` : 'Bom!';
       visning.si(mitt);
       visLiv();
@@ -103,7 +111,8 @@ export default class Kamp extends Phaser.Scene {
   }
 
   // Heltens slag. Typeangrep sender en lysende kule i sin farge. Tunge slag rister bildet.
-  async heltSlaar(angrep, rett, skade) {
+  // «effekt» er 'svak' (dobbel skade), 'preller' (halv) eller null.
+  async heltSlaar(angrep, rett, skade, effekt) {
     const fiende = this.fiende;
     if (!rett) {
       spill(this, 'bom');
@@ -113,13 +122,25 @@ export default class Kamp extends Phaser.Scene {
     }
     const tungt = angrep.id !== 'lett';
     const treff = () => {
+      if (effekt === 'svak') {
+        spill(this, 'svak');
+        this.gnister(this.midt(fiende), angrep.farge ?? 0xfff0c0, 32);
+        this.tall(fiende, `−${skade}!`, '#ff8af0', 22);
+        this.cameras.main.shake(260, 0.016);
+        return;
+      }
+      if (effekt === 'preller') {
+        spill(this, 'preller');
+        this.tall(fiende, `−${skade}`, '#9fb0c0', 10);
+        return;
+      }
       this.gnister(this.midt(fiende), angrep.farge ?? 0xfff0c0, tungt ? 16 : 8);
       this.tall(fiende, `−${skade}`, '#ffe08a');
       if (tungt) this.cameras.main.shake(180, angrep.type ? 0.006 : 0.012);
     };
     if (!angrep.type) {
       await this.slag(this.helt, fiende, true, () => {
-        spill(this, tungt ? 'tungt' : 'treff');
+        if (!effekt) spill(this, tungt ? 'tungt' : 'treff');
         treff();
       });
       return;
@@ -138,11 +159,11 @@ export default class Kamp extends Phaser.Scene {
   }
 
   // Et tall som spretter opp over figuren og blir borte.
-  tall(hvem, tekst, farge) {
+  tall(hvem, tekst, farge, storrelse = 14) {
     const t = this.add
       .text(hvem.x, hvem.y - hvem.displayHeight, tekst, {
         fontFamily: '"Trebuchet MS", sans-serif',
-        fontSize: '14px',
+        fontSize: `${storrelse}px`,
         fontStyle: 'bold',
         color: farge,
         stroke: '#1c1820',

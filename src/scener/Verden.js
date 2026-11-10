@@ -2,9 +2,9 @@ import { lesKart, vedSiden } from '../kart.js';
 import { finnVei } from '../vei.js';
 import { tegnKart, R, DYBDE } from '../tegnKart.js';
 import { lagAnimasjoner, figurbilde } from '../figur.js';
-import { fiendeFor } from '../fiender.js';
+import { fiendeFor, fiendeNivaa, lagFiende, tilNivaa } from '../fiender.js';
 import { spiller, lagre, velgKlasse } from '../spiller.js';
-import { maksLiv, kampErfaring, giErfaring, nesteUtstyr } from '../vekst.js';
+import { nivaa, maksLiv, kampErfaring, giErfaring, nesteUtstyr } from '../vekst.js';
 import { KISTE, KISTE_LUKKET, KISTE_AAPEN, DRIKK, DRIKK_BILDE } from '../utstyr.js';
 import { KLASSER } from '../klasser.js';
 import { kartFor, FORSTE, TRAPP } from '../kartliste.js';
@@ -189,7 +189,7 @@ export default class Verden extends Phaser.Scene {
         .setOrigin(0.5, 1)
         .setDepth(DYBDE.helt - 1)
         .play(`${type.figur}_idle`);
-      this.fiender.push({ type, x: m.x, y: m.y, liv: type.liv, bilde });
+      this.fiender.push({ ...lagFiende(type, this.fiendeNivaa()), x: m.x, y: m.y, bilde });
     }
   }
 
@@ -207,6 +207,11 @@ export default class Verden extends Phaser.Scene {
         .setDepth(DYBDE.helt - 1);
       this.ting.push({ tegn: m.tegn, x: m.x, y: m.y, nokkel, brukt, bilde });
     }
+  }
+
+  // Nivået fiendene i dette kartet har nå.
+  fiendeNivaa() {
+    return fiendeNivaa(this.kartData.nivaa, nivaa(spiller.erfaring));
   }
 
   fiendeI(x, y) {
@@ -291,6 +296,7 @@ export default class Verden extends Phaser.Scene {
 
   async kamp(fiende) {
     this.stopp();
+    Object.assign(fiende, tilNivaa(fiende, this.fiendeNivaa())); // helten kan ha vokst
     const type = fiende.type;
     if (type.boss) {
       const forste = !spiller.sett.includes(type.id);
@@ -312,7 +318,7 @@ export default class Verden extends Phaser.Scene {
   // som { tekst, lyd }.
   oppgjor(fiende, k) {
     const seier = k.utfall === 'seier';
-    const poeng = kampErfaring(fiende.type, k);
+    const poeng = kampErfaring(fiende, k);
     const e = giErfaring(spiller.erfaring, poeng);
     spiller.erfaring = e.erfaring;
     spiller.liv = k.heltLiv;

@@ -4,7 +4,9 @@ export default {
   navn: 'Orkesjaman',
   bestemt: 'Sjamanen',
   figur: 'orc_shaman',
-  liv: 16,
-  skade: 4,
+  liv: 40,
+  skade: 6,
   erfaring: 10,
+  svak: ['slag'],
+  sterk: ['lyn'],
 };

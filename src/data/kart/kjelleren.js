@@ -4,6 +4,7 @@
 export default {
   id: 'kjelleren', // brukes i lagringen
   navn: 'Kjelleren',
+  nivaa: 1, // fiendene her er minst på dette nivået
   ned: 'dypet',
   ruter: [
     '########################################',

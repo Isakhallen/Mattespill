@@ -4,7 +4,9 @@ export default {
   navn: 'Imp',
   bestemt: 'Impen',
   figur: 'imp',
-  liv: 8,
-  skade: 1,
+  liv: 35,
+  skade: 3,
   erfaring: 4,
+  svak: ['is'],
+  sterk: ['ild'],
 };

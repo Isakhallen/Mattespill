@@ -3,5 +3,5 @@ export default {
   id: 'rustentSverd',
   navn: 'Rustent sverd',
   slag: 'vaapen',
-  skade: 1,
+  skade: 2,
 };

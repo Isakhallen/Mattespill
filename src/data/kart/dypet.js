@@ -2,6 +2,7 @@
 export default {
   id: 'dypet',
   navn: 'Dypet',
+  nivaa: 3,
   opp: 'kjelleren',
   tekst: ['Det er mørkt her nede.', 'Langt inne hører du noen som gomler på tall.'],
   ruter: [

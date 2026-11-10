@@ -2,7 +2,7 @@ import { lesLyd, skrivLyd } from './lagring.js';
 
 // Lydeffekter og musikk. Filene ligger i assets/lyd/ (kilder i KILDER.md).
 // Musikken har samme navn som kartet og lastes først når kartet vises.
-export const EFFEKTER = ['treff', 'tungt', 'magi', 'bom', 'au', 'seier', 'nivaa', 'kiste', 'drikk', 'trapp'];
+export const EFFEKTER = ['treff', 'tungt', 'magi', 'bom', 'au', 'seier', 'nivaa', 'kiste', 'drikk', 'trapp', 'svak', 'preller'];
 const STYRKE = { effekt: 0.6, musikk: 0.3 };
 
 export function lastEffekter(scene) {
