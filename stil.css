@@ -20,18 +20,22 @@ body { font-family: "Trebuchet MS", "Segoe UI", sans-serif; color: #f1e9dc; }
 }
 #kamp .liv i { display: block; height: 100%; background: #c0453a; transition: width 0.3s; }
 #kamp .helt .liv i { background: #6ab04c; }
-#kamp .melding { position: absolute; left: 0; right: 0; top: 74.5%; text-align: center; }
+#kamp .melding { position: absolute; left: 0; right: 0; top: 67.5%; text-align: center; }
+/* Opptil 6 knapper i to rader med tre. Fire knapper blir to og to. */
 #kamp .valg {
-  position: absolute; left: 0; right: 0; top: 82%;
-  display: flex; justify-content: center; gap: calc(4 * var(--u));
+  position: absolute; left: 0; right: 0; top: 75.5%; margin: 0 auto; max-width: calc(282 * var(--u));
+  display: flex; flex-wrap: wrap; justify-content: center; gap: calc(2 * var(--u)) calc(3 * var(--u));
 }
+#kamp .valg:has(> :nth-child(4):last-child) { max-width: calc(187 * var(--u)); }
 #kamp button {
-  width: calc(72 * var(--u)); padding: calc(3 * var(--u)) 0; font: inherit;
+  width: calc(92 * var(--u)); padding: calc(1.5 * var(--u)) 0; font: inherit; font-size: 0.9em; line-height: 1.15;
   color: #f1e9dc; background: #2a2330; border: var(--u) solid #6b5f73; cursor: pointer;
 }
 #kamp button:focus { outline: none; border-color: #e8c170; }
 #kamp button small { display: block; font-size: 0.75em; color: #a99fb0; }
 #kamp button:disabled { opacity: 0.45; cursor: default; }
+#kamp button .merke { width: calc(9 * var(--u)); margin-left: var(--u); vertical-align: middle; }
+.merke { image-rendering: pixelated; }
 
 body:has(#kamp:not([hidden])) :is(#hint, #status) { display: none; }
 
@@ -113,3 +117,35 @@ body:has(#kamp:not([hidden])) :is(#hint, #status) { display: none; }
   color: #1c1820; background: #e8c170; border: 0; cursor: pointer;
 }
 #kort button:focus { outline: 3px solid #f1e9dc; }
+
+/* Angrepsboka. */
+#bok {
+  position: fixed; inset: 0; z-index: 2;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(10, 8, 12, 0.6);
+}
+#bok[hidden] { display: none; }
+#bok .rute {
+  width: min(780px, 94vw); padding: 12px 20px 16px; text-align: center;
+  background: #2a2330; border: 4px solid #e8c170;
+  box-shadow: 0 0 0 4px #1c1820, 0 0 36px rgba(232, 193, 112, 0.35), 0 12px 40px #000;
+}
+#bok h2 { margin: 4px 0 2px; font-size: 24px; color: #e8c170; }
+#bok .telling { margin: 0 0 10px; font-size: 16px; color: #a99fb0; }
+#bok .telling.fullt { color: #ff8a7a; }
+#bok .sider { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+#bok .angrep {
+  position: relative; padding: 6px 4px; font: inherit; font-size: 15px; color: #f1e9dc;
+  background: #1c1820; border: 3px solid #4a4052; cursor: pointer;
+}
+#bok .angrep[aria-pressed="true"] { background: #3a3020; border-color: #e8c170; }
+#bok .angrep[aria-pressed="true"]::after { content: "✓"; position: absolute; top: 1px; right: 5px; color: #e8c170; }
+#bok .angrep:disabled { opacity: 0.4; cursor: default; }
+#bok .angrep:focus { outline: 2px solid #f1e9dc; }
+#bok .angrep small { display: block; margin-top: 2px; font-size: 12px; color: #a99fb0; }
+#bok .merke { width: 18px; margin-left: 5px; vertical-align: -3px; }
+#bok .lukk {
+  margin-top: 12px; padding: 8px 28px; font: inherit; font-size: 20px;
+  color: #1c1820; background: #e8c170; border: 0; cursor: pointer;
+}
+#bok .lukk:focus { outline: 3px solid #f1e9dc; }

@@ -17,6 +17,8 @@ import { lagBeskjed } from '../beskjed.js';
 import { kjorOving } from '../oving.js';
 import { lastEffekter, spill, musikk, settLyd, lydPaa } from '../lyd.js';
 import { lagHeltekort } from '../heltekort.js';
+import { lagAngrepsbok } from '../angrepsbok.js';
+import { MAKS_ANGREP } from '../kamp.js';
 
 const STEGTID = 130; // ms per rute
 const TONING = 250; // ms når kartet byttes
@@ -87,12 +89,14 @@ export default class Verden extends Phaser.Scene {
     this.status ??= lagStatus(
       {
         kort: () => this.visKort(),
+        bok: () => this.visBok(),
         lyd: () => settLyd(this.game, !lydPaa()),
         nyHelt: () => this.nyHelt(),
       },
       settLyd(this.game),
     );
     this.heltekort ??= lagHeltekort();
+    this.bok ??= lagAngrepsbok();
     musikk(this, this.kartId);
     this.status.vis(spiller);
     this.beskjed ??= lagBeskjed();
@@ -100,6 +104,7 @@ export default class Verden extends Phaser.Scene {
     this.opptatt = false; // sant mens en oppgave, beskjed eller kamp vises
     this.input.keyboard.on('keydown-O', () => this.oving());
     this.input.keyboard.on('keydown-H', () => this.visKort());
+    this.input.keyboard.on('keydown-B', () => this.visBok());
     this.input.on('pointerdown', (peker) => {
       if (this.opptatt) return;
       const til = { x: Math.floor(peker.worldX / R), y: Math.floor(peker.worldY / R) };
@@ -260,6 +265,14 @@ export default class Verden extends Phaser.Scene {
     this.slipp();
   }
 
+  async visBok() {
+    if (this.opptatt) return;
+    this.stopp();
+    await this.bok.vis(spiller);
+    lagre();
+    this.slipp();
+  }
+
   async oving() {
     if (this.opptatt) return;
     this.stopp();
@@ -344,7 +357,13 @@ export default class Verden extends Phaser.Scene {
     ];
     if (e.til > e.fra) {
       tekster.push({ tekst: `Nivå ${e.til}! Du er blitt sterkere.`, lyd: 'nivaa' });
-      for (const a of e.nyeAngrep) tekster.push({ tekst: `Nytt angrep: ${a.navn}!`, lyd: 'magi' });
+      // Nye angrep tas med av seg selv hvis det er plass. Ellers kan eleven bytte i boka.
+      for (const a of e.nyeAngrep) {
+        const plass = spiller.angrep.length < MAKS_ANGREP;
+        if (plass) spiller.angrep.push(a.id);
+        const tekst = plass ? `Nytt angrep: ${a.navn}!` : `Nytt angrep: ${a.navn}! Ta det med i angrepsboka (B).`;
+        tekster.push({ tekst, lyd: 'magi' });
+      }
       spiller.liv = maksLiv(spiller);
     }
 

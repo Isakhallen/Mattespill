@@ -1,5 +1,7 @@
 import { gulvnavn } from '../tegnKart.js';
-import { angrepFor, skadeMot, vistSkade, virkning, hvilEtter, nyKamp, runde, teller } from '../kamp.js';
+import { angrepFor, motFiende, vistSkade, virkning, hvilEtter, nyKamp, runde, teller, PAA_HELT } from '../kamp.js';
+import { verdi } from '../angrepsbok.js';
+import { lagMerker, merkeFor } from '../merker.js';
 import { nivaa, maksLiv, skadeBonus } from '../vekst.js';
 import { lagOppgave, MAKS_TRINN } from '../oppgaver.js';
 import { oppdater } from '../tilpasning.js';
@@ -37,6 +39,8 @@ export default class Kamp extends Phaser.Scene {
       const g = this.make.graphics({}, false);
       g.fillStyle(0xffffff).fillRect(0, 0, 2, 2).generateTexture('gnist', 2, 2).destroy();
     }
+    lagMerker(this);
+    this.merker = [];
     this.kjor(d);
   }
 
@@ -45,12 +49,12 @@ export default class Kamp extends Phaser.Scene {
     const maks = maksLiv(spiller);
     const n = nivaa(spiller.erfaring);
     const bonus = skadeBonus(spiller);
-    let k = nyKamp(spiller.liv, fiende.liv, fiende.skade);
+    let k = nyKamp(spiller.liv, fiende.liv, fiende.skade, maks);
     let rette = 0;
     let hviler = {}; // angrep som hviler: { id: turer igjen }
-    const visLiv = () => {
-      visning.liv('helt', k.heltLiv, maks);
-      visning.liv('fiende', k.fiendeLiv, fiende.maks);
+    const visLiv = (helt = k.heltLiv, mot = k.fiendeLiv) => {
+      visning.liv('helt', helt, maks);
+      visning.liv('fiende', mot, fiende.maks);
     };
     visning.aapne(`${spiller.navn} · Nivå ${n}`, `${type.navn} · Nivå ${fiende.nivaa}`);
     visLiv();
@@ -59,12 +63,12 @@ export default class Kamp extends Phaser.Scene {
     let forrige = null;
     while (!k.utfall) {
       const trinn = spiller.tilpasning.trinn;
-      const liste = angrepFor(n, trinn, bonus);
-      const valg = liste.map((a) => ({
-        navn: a.navn,
-        under: hviler[a.id] ? `Hviler ${hviler[a.id]}` : `${vistSkade(a, type)} skade`,
-        av: !!hviler[a.id],
-      }));
+      const liste = angrepFor(n, trinn, bonus, spiller.angrep);
+      const valg = liste.map((a) => {
+        const full = a.heler && k.heltLiv >= maks;
+        const under = hviler[a.id] ? `Hviler ${hviler[a.id]}` : full ? 'Fullt liv' : verdi({ ...a, skade: vistSkade(a, type) });
+        return { navn: a.navn, under, merke: merkeFor(a), av: !!hviler[a.id] || full };
+      });
       const angrep = liste[await visning.velg(valg)];
       const oppgave = lagOppgave(angrep.oppgavetrinn, Math.random, forrige);
       forrige = oppgave.tekst;
@@ -74,25 +78,45 @@ export default class Kamp extends Phaser.Scene {
       if (teller(angrep.oppgavetrinn, trinn, rett)) {
         spiller.tilpasning = oppdater(spiller.tilpasning, rett, MAKS_TRINN);
       }
-      k = runde(k, { ...angrep, skade: skadeMot(angrep, type) }, rett);
+      k = runde(k, motFiende(angrep, type), rett);
       hviler = hvilEtter(hviler, angrep, rett);
 
       // Svakheten vises bare med et stort tall og en egen lyd. Skjold og det fienden tåler, gir et lite tall.
       const v = type.skjold && angrep.id === 'lett' ? 0.5 : virkning(angrep, type);
-      await this.heltSlaar(angrep, rett, k.traff, v > 1 ? 'svak' : v < 1 ? 'preller' : null);
-      const mitt = rett ? `Treff! −${k.traff}.` : 'Bom!';
+      await this.heltSlaar(angrep, rett, k, v > 1 ? 'svak' : v < 1 ? 'preller' : null);
+      this.visMerker(k.aktive);
+      const liv = k.heling ? ` +${k.heling} liv.` : '';
+      const mitt = !rett ? 'Bom!' : angrep.selv ? (angrep.heler ? liv.trim() : 'Skjold!') : `Treff! −${k.traff}.${liv}`;
       visning.si(mitt);
-      visLiv();
+      let fiendeLiv = k.mellom.fiendeLiv;
+      visLiv(k.mellom.heltLiv, fiendeLiv);
+
+      // Gift og brann skader fienden hver tur.
+      for (const p of k.prikker) {
+        await this.pause(320);
+        fiendeLiv = Math.max(0, fiendeLiv - p.skade);
+        this.prikk(p);
+        visLiv(k.mellom.heltLiv, fiendeLiv);
+      }
       if (k.utfall === 'seier') break;
 
       await this.pause(PAUSE);
-      await this.slag(this.fiende, this.helt, true, () => {
-        spill(this, 'au');
-        this.tall(this.helt, `−${k.slag}`, '#ff8a7a');
-        if (type.boss) this.cameras.main.shake(200, 0.012);
-      });
-      visning.si(`${mitt} ${type.bestemt} slår: −${k.slag}.`);
+      if (k.frosset) {
+        this.fiende.setTint(0x9fd8ff);
+        this.tweens.add({ targets: this.fiende, x: this.fiende.x + 2, duration: 50, yoyo: true, repeat: 3 });
+        await this.pause(400);
+        this.fiende.clearTint();
+        visning.si(`${mitt} ${type.bestemt} er frosset.`);
+      } else {
+        await this.slag(this.fiende, this.helt, true, () => {
+          spill(this, 'au');
+          this.tall(this.helt, `−${k.slag}`, '#ff8a7a');
+          if (type.boss) this.cameras.main.shake(200, 0.012);
+        });
+        visning.si(`${mitt} ${type.bestemt} slår: −${k.slag}.`);
+      }
       visLiv();
+      this.visMerker(Object.keys(k.merker));
     }
 
     const tapte = k.utfall === 'seier' ? this.fiende : this.helt;
@@ -110,10 +134,46 @@ export default class Kamp extends Phaser.Scene {
     return new Promise((los) => this.time.delayedCall(ms, los));
   }
 
+  // Merkene over figurene: skjold over helten, resten over fienden.
+  visMerker(navn) {
+    for (const m of this.merker) m.destroy();
+    const over = (f, liste) =>
+      liste.map((m, i) =>
+        this.add
+          .image(f.x + (i - (liste.length - 1) / 2) * 20, f.y - f.displayHeight - 2, `merke_${m}`)
+          .setOrigin(0.5, 1)
+          .setScale(S),
+      );
+    this.merker = [
+      ...over(this.helt, navn.filter((m) => PAA_HELT.includes(m))),
+      ...over(this.fiende, navn.filter((m) => !PAA_HELT.includes(m))),
+    ];
+  }
+
+  // Gift eller brann skader fienden.
+  prikk(p) {
+    const farge = p.navn === 'gift' ? 0x7ad04a : 0xff8a2a;
+    spill(this, 'treff');
+    this.gnister(this.midt(this.fiende), farge, 10);
+    this.tall(this.fiende, `−${p.skade}`, `#${farge.toString(16)}`, 12);
+  }
+
+  // Helten lyser og får liv eller skjold.
+  async selv(angrep, k) {
+    spill(this, angrep.heler ? 'drikk' : 'magi');
+    this.helt.setTintFill(angrep.farge);
+    this.gnister(this.midt(this.helt), angrep.farge, 18);
+    if (k.heling) this.tall(this.helt, `+${k.heling}`, '#8af0a0');
+    await this.pause(260);
+    this.helt.clearTint();
+  }
+
   // Heltens slag. Typeangrep sender en lysende kule i sin farge. Tunge slag rister bildet.
   // «effekt» er 'svak' (dobbel skade), 'preller' (halv) eller null.
-  async heltSlaar(angrep, rett, skade, effekt) {
+  async heltSlaar(angrep, rett, k, effekt) {
     const fiende = this.fiende;
+    const skade = k.traff;
+    if (rett && angrep.selv) return this.selv(angrep, k);
     if (!rett) {
       spill(this, 'bom');
       await this.slag(this.helt, fiende, false);
@@ -122,6 +182,7 @@ export default class Kamp extends Phaser.Scene {
     }
     const tungt = angrep.id !== 'lett';
     const treff = () => {
+      if (k.heling) this.tall(this.helt, `+${k.heling}`, '#8af0a0');
       if (effekt === 'svak') {
         spill(this, 'svak');
         this.gnister(this.midt(fiende), angrep.farge ?? 0xfff0c0, 32);

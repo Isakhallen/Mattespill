@@ -1,3 +1,5 @@
+import { merkeLerret } from './merker.js';
+
 // Teksten i kampbildet som HTML oppå spillet: navn, liv, melding og valg.
 // Figurene tegnes av scenen Kamp.
 export function lagKampvisning(spill) {
@@ -42,7 +44,7 @@ export function lagKampvisning(spill) {
     const knapp = e.target.closest('button');
     if (knapp) ferdig([...valg.children].indexOf(knapp));
   });
-  // Tastene skal ikke nå spillet. 1 og 2 velger, pilene flytter mellom knappene.
+  // Tastene skal ikke nå spillet. 1–6 velger, pilene flytter mellom knappene.
   rot.addEventListener('keydown', (e) => {
     e.stopPropagation();
     const knapper = [...valg.children].filter((k) => !k.disabled);
@@ -73,14 +75,15 @@ export function lagKampvisning(spill) {
     si(tekst) {
       el('.melding').textContent = tekst;
     },
-    // Viser knapper og gir nummeret på den eleven velger. valg: [{ navn, under, av }]
-    // «av» gir en grå knapp som ikke kan velges.
+    // Viser knapper og gir nummeret på den eleven velger. valg: [{ navn, under, merke, av }]
+    // «merke» er et lite bilde ved navnet, og «av» gir en grå knapp som ikke kan velges.
     velg(liste) {
       valg.replaceChildren(
         ...liste.map((v) => {
           const knapp = document.createElement('button');
           knapp.type = 'button';
           knapp.append(v.navn);
+          if (v.merke) knapp.append(merkeLerret(v.merke));
           knapp.disabled = !!v.av;
           if (v.under) {
             const under = document.createElement('small');

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { ANGREP, MAKS_ANGREP, angrepFor, oppgavetrinn, skadeFor, teller } from '../src/kamp.js';
+import { ANGREP, MAKS_ANGREP, MAKS_OVER, angrepFor, oppgavetrinn, skadeFor, teller, standardValg } from '../src/kamp.js';
 import { STIGE, MAKS_TRINN } from '../src/oppgaver.js';
 import { FIENDER } from '../src/fiender.js';
 import { UTSTYR } from '../src/utstyr.js';
@@ -37,16 +37,20 @@ test('nytt nivå gir mer liv, litt mer skade og nye angrep', () => {
   assert.ok(skadeBonus(s3) > skadeBonus(s1));
   const e = giErfaring(grense(2) - 1, 25);
   assert.deepEqual([e.fra, e.til], [1, 3]);
-  assert.deepEqual(e.nyeAngrep.map((a) => a.nivaa), [2, 3]);
+  assert.deepEqual(e.nyeAngrep.map((a) => a.nivaa), [2, 2, 3, 3]);
   assert.deepEqual(giErfaring(0, 1).nyeAngrep, []);
 });
 
-test('typeangrep henter oppgaven fra sin type, nærmest elevens trinn', () => {
+test('typeangrep henter oppgaven fra sin type, nærmest elevens trinn, men aldri for høyt', () => {
   for (const a of ANGREP.filter((a) => a.type)) {
     const trinnITypen = STIGE.filter((s) => s.type === a.type).map((s) => s.trinn);
     assert.ok(trinnITypen.length, `${a.id}: ukjent type ${a.type}`);
     for (let t = 1; t <= MAKS_TRINN; t++) {
       const o = oppgavetrinn(a, t);
+      if (Math.min(...trinnITypen) > t + MAKS_OVER) {
+        assert.equal(o, t + MAKS_OVER, `${a.id} på trinn ${t}`);
+        continue;
+      }
       assert.ok(trinnITypen.includes(o));
       for (const x of trinnITypen) assert.ok(Math.abs(o - t) <= Math.abs(x - t));
     }
@@ -59,20 +63,27 @@ test('skaden måles mot elevens trinn', () => {
   assert.ok(skadeFor(9, 7) > skadeFor(7, 7));
 });
 
-test('kampen viser opptil fire angrep, aldri altfor vanskelige', () => {
+test('kampen viser de valgte angrepene, høyst seks, aldri altfor vanskelige', () => {
+  const alle = ANGREP.map((a) => a.id);
   for (let n = 1; n <= 20; n++) {
     for (let t = 1; t <= MAKS_TRINN; t++) {
-      const liste = angrepFor(n, t, 2);
-      assert.ok(liste.length >= 2 && liste.length <= MAKS_ANGREP);
-      assert.deepEqual(liste.slice(0, 2).map((a) => a.id), ['lett', 'tungt']);
-      for (const a of liste) {
-        assert.ok(a.oppgavetrinn <= t + 2, `nivå ${n}, trinn ${t}: ${a.id} på ${a.oppgavetrinn}`);
-        assert.ok((a.nivaa ?? 1) <= n);
+      for (const valgte of [undefined, alle, ['meteor', 'jordskjelv'], ['finnes-ikke']]) {
+        const liste = angrepFor(n, t, 2, valgte);
+        assert.ok(liste.length >= 1 && liste.length <= MAKS_ANGREP);
+        for (const a of liste) {
+          assert.ok(a.oppgavetrinn <= t + MAKS_OVER, `nivå ${n}, trinn ${t}: ${a.id} på ${a.oppgavetrinn}`);
+          assert.ok((a.nivaa ?? 1) <= n);
+          assert.ok(a.skade >= 1);
+        }
       }
     }
   }
-  assert.equal(angrepFor(1, 5).length, 2);
-  assert.equal(angrepFor(6, 9).length, 4);
+  assert.deepEqual(angrepFor(1, 5).map((a) => a.id), ['lett', 'tungt']);
+  assert.deepEqual(standardValg(3), ['lett', 'tungt', 'ildkule', 'giftpil', 'lyn', 'skjold']);
+  assert.deepEqual(standardValg(9).slice(0, 2), ['lett', 'tungt']);
+  assert.ok(standardValg(9).includes('jordskjelv'));
+  assert.deepEqual(angrepFor(9, 1, 0, ['jordskjelv']).map((a) => a.id), ['jordskjelv']);
+  assert.deepEqual(angrepFor(2, 1, 0, ['jordskjelv']).map((a) => a.id), standardValg(2));
   assert.equal(angrepFor(1, 5, 3)[0].skade, Math.round(5 * 1.3));
 });
 

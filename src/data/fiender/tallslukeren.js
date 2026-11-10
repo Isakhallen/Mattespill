@@ -11,8 +11,8 @@ export default {
   erfaring: 40,
   boss: true,
   skjold: true,
-  svak: ['is'],
-  sterk: ['ild'],
+  svak: ['is', 'hellig'],
+  sterk: ['ild', 'gift'],
   foer: [
     '«Mine tall! Du får dem aldri!»',
     'Lette slag preller av skjoldet hans.',

@@ -16,8 +16,10 @@ test('heltekortet viser nivå, utstyr, angrep og bossen', () => {
   const linje = Object.fromEntries(k.linjer);
   assert.equal(linje['Våpen'], 'Sverd');
   assert.equal(linje['Rustning'], 'Lærvest');
-  assert.match(linje['Angrep'], /Ildkule, Lyn/);
+  assert.match(linje['Angrep'], /Ildkule.*Lyn/);
   assert.doesNotMatch(linje['Angrep'], /Isspyd/);
+  s.angrep = ['tungt', 'lyn'];
+  assert.equal(Object.fromEntries(kortet(s).linjer)['Angrep'], 'Tungt angrep, Lyn');
   assert.match(k.merke, /ikke slått/);
   s.seire = 1;
   assert.match(kortet(s).merke, /én gang/);

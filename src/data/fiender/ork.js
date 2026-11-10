@@ -7,5 +7,5 @@ export default {
   liv: 45,
   skade: 5,
   erfaring: 8,
-  svak: ['lyn'],
+  svak: ['lyn', 'gift'],
 };
