@@ -6,6 +6,7 @@ import { KART, FORSTE, kartFor, lesKartData, UTGANG, utgang, inngangFra } from '
 import { STENGT } from '../src/data/ute.js';
 import { fiendeFor } from '../src/fiender.js';
 import { KISTE, DRIKK, UTSTYR } from '../src/utstyr.js';
+import { personFor } from '../src/folk.js';
 
 const lest = KART.map((k) => ({ data: k, kart: lesKartData(k) }));
 const lestFor = (id) => lest.find((l) => l.data.id === id);
@@ -34,7 +35,7 @@ test('alle tegn i kartene er kjent, og utgangene går til et kart med vei tilbak
   for (const { data, kart } of lest) {
     for (const m of kart.merker) {
       const ut = UTGANG.test(m.tegn);
-      assert.ok(fiendeFor(m.tegn) || m.tegn === KISTE || m.tegn === DRIKK || ut,
+      assert.ok(fiendeFor(m.tegn) || personFor(m.tegn) || m.tegn === KISTE || m.tegn === DRIKK || ut,
         `${data.id}: ukjent tegn «${m.tegn}» i ${m.x},${m.y}`);
       if (!ut) continue;
       const u = utgang(data, m.tegn);

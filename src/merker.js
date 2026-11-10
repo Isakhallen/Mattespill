@@ -1,4 +1,5 @@
 // Små merker (7×7 piksler) for statusene i kampen: over figurene og på knappene.
+// «utrop» og «spor» står over folk på kartet (nytt oppdrag og belønning).
 // Ingen tekst, bare bilde. Hver bokstav er en farge, punktum er tomt.
 const FARGER = {
   g: '#6ad04a', d: '#2f7a2a', w: '#ffffff', r: '#ff6a1a', y: '#ffd84a',
@@ -11,6 +12,8 @@ const MERKER = {
   svekket: ['..ppp..', '..ppp..', '..ppp..', 'ppppppp', '.ppppp.', '..ppp..', '...p...'],
   skjold: ['ooooooo', 'ossssso', 'osswsso', 'oswwwso', '.oswso.', '..oso..', '...o...'],
   liv: ['..lll..', '..lwl..', 'lllwlll', 'lwwwwwl', 'lllwlll', '..lwl..', '..lll..'],
+  utrop: ['..yyy..', '..yyy..', '..yyy..', '..yyy..', '.......', '..yyy..', '..yyy..'],
+  spor: ['.yyyyy.', 'yy...yy', '....yy.', '...yy..', '...yy..', '.......', '...yy..'],
 };
 export const MERKENAVN = Object.keys(MERKER);
 

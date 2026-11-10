@@ -19,6 +19,10 @@ import { lastEffekter, spill, musikk, settLyd, lydPaa } from '../lyd.js';
 import { lagHeltekort } from '../heltekort.js';
 import { lagAngrepsbok } from '../angrepsbok.js';
 import { MAKS_ANGREP } from '../kamp.js';
+import { personFor, synlig, folkemerke, snakkOm, replikk, slaattFiende } from '../folk.js';
+import { lagMerker } from '../merker.js';
+import { lagOppgave, MAKS_TRINN } from '../oppgaver.js';
+import { oppdater } from '../tilpasning.js';
 
 const STEGTID = 130; // ms per rute
 const TONING = 250; // ms når kartet byttes
@@ -74,6 +78,8 @@ export default class Verden extends Phaser.Scene {
     this.settUtFiender();
     this.ting = [];
     this.settUtTing();
+    this.folk = [];
+    this.settUtFolk();
 
     const kamera = this.cameras.main;
     // I hulene 4 piksler ekstra øverst så toppkanten på veggen synes.
@@ -101,6 +107,8 @@ export default class Verden extends Phaser.Scene {
     this.status.vis(spiller);
     this.beskjed ??= lagBeskjed();
     this.bossSlaatt = false;
+    this.bakt = false; // bakeren har én regneoppgave hver gang helten kommer til kartet
+    this.prat = {}; // hvor mange ganger eleven har snakket med hver person her
     this.opptatt = false; // sant mens en oppgave, beskjed eller kamp vises
     this.input.keyboard.on('keydown-O', () => this.oving());
     this.input.keyboard.on('keydown-H', () => this.visKort());
@@ -111,7 +119,7 @@ export default class Verden extends Phaser.Scene {
       // Gå rundt fiender, ting og utganger, bortsett fra det eleven klikker på.
       const stengt = (x, y) =>
         this.kart.vegg(x, y) ||
-        ((this.fiendeI(x, y) || this.tingI(x, y) || this.utgangI(x, y)) &&
+        ((this.fiendeI(x, y) || this.tingI(x, y) || this.utgangI(x, y) || this.personI(x, y)) &&
           !(x === til.x && y === til.y));
       this.vei = finnVei({ ...this.kart, vegg: stengt }, this.rute, til) ?? [];
     });
@@ -228,6 +236,108 @@ export default class Verden extends Phaser.Scene {
     }
   }
 
+  // Folk i kartet, bortsett fra dem som er borte et annet sted.
+  settUtFolk() {
+    lagMerker(this);
+    for (const m of this.kart.merker) {
+      const person = personFor(m.tegn);
+      if (!person || !synlig(spiller, person, this.kartId)) continue;
+      lagAnimasjoner(this, person.figur);
+      const p = this.piksel(m.x, m.y);
+      const bilde = this.add
+        .sprite(p.x, p.y, 'dungeon')
+        .setOrigin(0.5, 1)
+        .setDepth(DYBDE.helt - 1)
+        .play(`${person.figur}_idle`);
+      this.folk.push({ person, x: m.x, y: m.y, bilde });
+    }
+    this.visFolkemerker();
+  }
+
+  // ! over den som har et nytt oppdrag, ? over den som har en belønning.
+  visFolkemerker() {
+    for (const f of this.folk) {
+      if (f.merke) {
+        this.tweens.killTweensOf(f.merke);
+        f.merke.destroy();
+        f.merke = null;
+      }
+      const navn = folkemerke(spiller, f.person);
+      if (!navn) continue;
+      const y = f.bilde.y - f.bilde.height + 4;
+      f.merke = this.add.image(f.bilde.x, y, `merke_${navn}`).setOrigin(0.5, 1).setDepth(DYBDE.over + 1);
+      this.tweens.add({ targets: f.merke, y: y - 2, duration: 500, yoyo: true, repeat: -1 });
+    }
+  }
+
+  personI(x, y) {
+    return this.folk.find((f) => f.x === x && f.y === y);
+  }
+
+  // Prat med en person: oppdraget først, så bakerens regneoppgave, ellers en replikk.
+  async snakk(f) {
+    this.stopp();
+    const p = f.person;
+    const hvem = { navn: p.navn, bilde: figurbilde(this, p.figur) };
+    const om = snakkOm(spiller, p);
+    if (om) {
+      for (const t of om.tekst) await this.beskjed.vis(t, undefined, hvem);
+      if (om.hjem) {
+        // Den som var borte, går hjem.
+        f.bilde.destroy();
+        f.merke?.destroy();
+        this.folk = this.folk.filter((x) => x !== f);
+      }
+      lagre();
+      if (om.belonning) await this.belonn(om.belonning);
+    } else if (p.regn && !this.bakt) {
+      await this.regn(p, hvem);
+    } else {
+      const gang = (this.prat[p.id] = (this.prat[p.id] ?? -1) + 1);
+      await this.beskjed.vis(replikk(p, spiller.tilpasning.trinn, gang), undefined, hvem);
+    }
+    this.visFolkemerker();
+    this.slipp();
+  }
+
+  // Bakeren ber om hjelp med en oppgave på elevens trinn. Feil er ufarlig: eleven kan prøve igjen.
+  async regn(p, hvem) {
+    const ja = await this.beskjed.vis('Kan du hjelpe meg å regne?', [{ navn: 'Ja' }, { navn: 'Ikke nå' }], hvem);
+    if (ja !== 0) return;
+    const t = spiller.tilpasning;
+    const utfall = await this.oppgaverute.spor(lagOppgave(t.trinn), { topp: p.navn, taster: { Escape: 'lukk' } });
+    if (utfall === 'lukk') return;
+    spiller.tilpasning = oppdater(t, utfall === 'rett', MAKS_TRINN);
+    lagre();
+    if (utfall !== 'rett') {
+      await this.beskjed.vis('Takk for at du prøvde! Spør meg igjen når du vil.', undefined, hvem);
+      return;
+    }
+    this.bakt = true;
+    spiller.liv = maksLiv(spiller);
+    spill(this, 'drikk');
+    await this.beskjed.vis('Riktig! Her er en varm bolle. Fullt liv!', undefined, hvem);
+    await this.belonn({ erfaring: 2 });
+  }
+
+  // Belønning fra folk: erfaring, og gull når spilleren har gull (bøtte 9).
+  async belonn({ erfaring = 0, gull = 0 }) {
+    const e = giErfaring(spiller.erfaring, erfaring);
+    spiller.erfaring = e.erfaring;
+    let tekst = `+${erfaring} erfaring.`;
+    if (gull && typeof spiller.gull === 'number') {
+      spiller.gull += gull;
+      tekst += ` +${gull} gull.`;
+    }
+    const meldinger = [{ tekst, lyd: 'kiste' }, ...this.vokst(e)];
+    lagre();
+    this.status.vis(spiller);
+    for (const m of meldinger) {
+      if (m.lyd) spill(this, m.lyd);
+      await this.beskjed.vis(m.tekst);
+    }
+  }
+
   // Nivået fiendene i dette kartet har nå.
   fiendeNivaa() {
     return fiendeNivaa(this.kartData.nivaa, nivaa(spiller.erfaring));
@@ -341,6 +451,22 @@ export default class Verden extends Phaser.Scene {
     });
   }
 
+  // Nytt nivå etter mer erfaring («e» fra giErfaring): fullt liv og meldinger om nivå og nye angrep.
+  vokst(e) {
+    const tekster = [];
+    if (e.til <= e.fra) return tekster;
+    tekster.push({ tekst: `Nivå ${e.til}! Du er blitt sterkere.`, lyd: 'nivaa' });
+    // Nye angrep tas med av seg selv hvis det er plass. Ellers kan eleven bytte i boka.
+    for (const a of e.nyeAngrep) {
+      const plass = spiller.angrep.length < MAKS_ANGREP;
+      if (plass) spiller.angrep.push(a.id);
+      const tekst = plass ? `Nytt angrep: ${a.navn}!` : `Nytt angrep: ${a.navn}! Ta det med i angrepsboka (B).`;
+      tekster.push({ tekst, lyd: 'magi' });
+    }
+    spiller.liv = maksLiv(spiller);
+    return tekster;
+  }
+
   // Etter kampen: erfaring, nivå, liv og lagring. Gir meldingene kampen skal vise,
   // som { tekst, lyd }.
   oppgjor(fiende, k) {
@@ -354,20 +480,11 @@ export default class Verden extends Phaser.Scene {
     const pluss = poeng ? ` +${poeng} erfaring.` : '';
     const tekster = [
       seier ? { tekst: `Du vant!${pluss}`, lyd: 'seier' } : { tekst: `Du er utslitt og må hvile.${pluss}` },
+      ...this.vokst(e),
     ];
-    if (e.til > e.fra) {
-      tekster.push({ tekst: `Nivå ${e.til}! Du er blitt sterkere.`, lyd: 'nivaa' });
-      // Nye angrep tas med av seg selv hvis det er plass. Ellers kan eleven bytte i boka.
-      for (const a of e.nyeAngrep) {
-        const plass = spiller.angrep.length < MAKS_ANGREP;
-        if (plass) spiller.angrep.push(a.id);
-        const tekst = plass ? `Nytt angrep: ${a.navn}!` : `Nytt angrep: ${a.navn}! Ta det med i angrepsboka (B).`;
-        tekster.push({ tekst, lyd: 'magi' });
-      }
-      spiller.liv = maksLiv(spiller);
-    }
 
     if (seier) {
+      slaattFiende(spiller, fiende.type.id);
       fiende.bilde.destroy();
       this.fiender = this.fiender.filter((f) => f !== fiende);
       spiller.slaatt.push(this.nokkel(fiende));
@@ -429,6 +546,11 @@ export default class Verden extends Phaser.Scene {
     const fiende = this.fiendeI(x, y);
     if (fiende) {
       this.kamp(fiende);
+      return false;
+    }
+    const person = this.personI(x, y);
+    if (person) {
+      this.snakk(person);
       return false;
     }
     const ting = this.tingI(x, y);

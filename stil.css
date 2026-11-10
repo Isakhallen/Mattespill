@@ -82,6 +82,9 @@ body:has(#kamp:not([hidden])) :is(#hint, #status) { display: none; }
 }
 :is(#oppgave, #beskjed) button:focus { outline: 3px solid #f1e9dc; }
 #beskjed .tekst { white-space: pre-line; }
+#beskjed .hvem { display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 22px; }
+#beskjed .hvem[hidden] { display: none; }
+#beskjed .hvem .figurbilde { margin: 0; }
 #beskjed .valg { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; }
 #beskjed .valg small { display: block; margin-top: 4px; font-size: 14px; }
 #beskjed .figurbilde { display: block; margin: 4px auto 8px; image-rendering: pixelated; background-repeat: no-repeat; }

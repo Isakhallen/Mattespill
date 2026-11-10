@@ -7,6 +7,7 @@ import { kartFor, FORSTE } from './kartliste.js';
 import { maksLiv, nivaa } from './vekst.js';
 import { ANGREP, MAKS_ANGREP, standardValg } from './kamp.js';
 import { les, skriv } from './lagring.js';
+import { lesOppdrag } from './folk.js';
 
 const heltall = (x, min, maks) => Number.isInteger(x) && x >= min && x <= maks;
 const tekster = (x) => (Array.isArray(x) ? [...new Set(x.filter((t) => typeof t === 'string'))] : []);
@@ -15,6 +16,7 @@ const tekster = (x) => (Array.isArray(x) ? [...new Set(x.filter((t) => typeof t 
 // «klasse» er null til eleven har valgt. «kart» er kartet helten står i.
 // «slaatt» og «aapnet» er fiender og ting på kartet, skrevet som «kart:x,y».
 // «sett» er historietekster eleven har sett. «seire» er hvor mange ganger bossen er slått.
+// «oppdrag» er { id: { steg, antall } } (se src/folk.js).
 // «angrep» er angrepene eleven har tatt med fra angrepsboka (høyst MAKS_ANGREP).
 export function lagSpiller(d) {
   if (!d || typeof d !== 'object') d = {};
@@ -31,6 +33,7 @@ export function lagSpiller(d) {
     aapnet: tekster(d.aapnet),
     sett: tekster(d.sett),
     seire: heltall(d.seire, 0, 1e6) ? d.seire : 0,
+    oppdrag: lesOppdrag(d.oppdrag),
   };
   s.liv = heltall(d.liv, 1, maksLiv(s)) ? d.liv : maksLiv(s);
   const angrep = tekster(d.angrep).filter((id) => ANGREP.some((a) => a.id === id));
@@ -57,6 +60,7 @@ export const tilLagring = (s) => ({
   sett: s.sett,
   seire: s.seire,
   angrep: s.angrep,
+  oppdrag: s.oppdrag,
 });
 
 // Det som følger eleven gjennom spillet.

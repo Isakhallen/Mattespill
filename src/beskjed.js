@@ -3,7 +3,7 @@ export function lagBeskjed() {
   const rot = document.createElement('div');
   rot.id = 'beskjed';
   rot.hidden = true;
-  rot.innerHTML = `<div class="rute"><div class="tekst"></div><div class="valg"></div></div>`;
+  rot.innerHTML = `<div class="rute"><div class="hvem" hidden></div><div class="tekst"></div><div class="valg"></div></div>`;
   document.body.append(rot);
   const valg = rot.querySelector('.valg');
   let los = null;
@@ -37,8 +37,12 @@ export function lagBeskjed() {
   return {
     // Viser teksten og venter. Gir nummeret på valget (0 for Videre).
     // liste: [{ navn, under, bilde }], der «bilde» er et HTML-element.
-    vis(tekst, liste = [{ navn: 'Videre' }]) {
+    // hvem: { navn, bilde } for den som snakker, eller null.
+    vis(tekst, liste = [{ navn: 'Videre' }], hvem = null) {
       rot.querySelector('.tekst').textContent = tekst;
+      const h = rot.querySelector('.hvem');
+      h.hidden = !hvem;
+      h.replaceChildren(...(hvem ? [hvem.bilde, hvem.navn] : []));
       valg.replaceChildren(
         ...liste.map((v) => {
           const knapp = document.createElement('button');
