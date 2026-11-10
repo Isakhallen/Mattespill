@@ -27,6 +27,7 @@ export function lagFiende(type, nivaa) {
     liv: maks,
     skade: Math.round(type.skade * (1 + 0.2 * (nivaa - 1))),
     erfaring: Math.round(type.erfaring * styrke(nivaa)),
+    gull: Math.round((type.gull ?? 0) * styrke(nivaa)),
   };
 }
 

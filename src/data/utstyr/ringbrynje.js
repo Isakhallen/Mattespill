@@ -3,4 +3,5 @@ export default {
   navn: 'Ringbrynje',
   slag: 'rustning',
   liv: 12,
+  pris: 40,
 };

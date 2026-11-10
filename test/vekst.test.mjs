@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { ANGREP, MAKS_ANGREP, MAKS_OVER, angrepFor, oppgavetrinn, skadeFor, teller, standardValg } from '../src/kamp.js';
 import { STIGE, MAKS_TRINN } from '../src/oppgaver.js';
 import { FIENDER } from '../src/fiender.js';
-import { UTSTYR } from '../src/utstyr.js';
+import { UTSTYR, KISTEUTSTYR } from '../src/utstyr.js';
 import {
   nivaa, grense, maksLiv, skadeBonus, kampErfaring, giErfaring, nesteUtstyr, beste,
 } from '../src/vekst.js';
@@ -97,7 +97,7 @@ test('feil på for vanskelig oppgave og rett på altfor lett teller ikke', () =>
 
 test('kistene gir utstyr i rekkefølge, og det beste brukes', () => {
   let eier = [];
-  for (const u of UTSTYR) {
+  for (const u of KISTEUTSTYR) {
     assert.equal(nesteUtstyr(eier), u);
     eier = [...eier, u.id];
   }

@@ -1,5 +1,5 @@
 // «tegn» er bokstaven i tekstkartet. «figur» er navnet i atlaset.
-// «liv», «skade» og «erfaring» gjelder på nivå 1 og vokser med nivået (src/fiender.js).
+// «liv», «skade», «erfaring» og «gull» gjelder på nivå 1 og vokser med nivået (src/fiender.js).
 // «svak»: elementer som gir dobbel skade, «sterk»: halv skade. Det står aldri i spillet.
 export default {
   id: 'goblin',
@@ -10,6 +10,7 @@ export default {
   liv: 30,
   skade: 3,
   erfaring: 3,
+  gull: 3,
   svak: ['ild', 'gift'],
   sterk: ['jord'],
 };

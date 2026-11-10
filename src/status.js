@@ -1,6 +1,6 @@
 import { nivaa, grense, maksLiv, MAKS_NIVAA } from './vekst.js';
 
-// Statuslinja øverst på kartet: nivå, liv, erfaring og knappene.
+// Statuslinja øverst på kartet: nivå, liv, erfaring, gull og knappene.
 // knapper: { kort, bok, lyd, nyHelt }. «lyd» bytter lyden og gir true hvis den er på.
 export function lagStatus(knapper, lydPaa) {
   const rot = document.createElement('div');
@@ -9,6 +9,7 @@ export function lagStatus(knapper, lydPaa) {
     <span class="${navn}"><b>${navn === 'liv' ? 'Liv' : 'Erfaring'}</b>
       <span class="maaler"><i></i></span><span class="tall"></span></span>`;
   rot.innerHTML = `<span class="nivaa"></span>${maaler('liv')}${maaler('xp')}
+    <span class="gull"><b>Gull</b><span class="sum"></span></span>
     <button type="button" class="kort">Heltekort</button>
     <button type="button" class="bok">Angrep</button>
     <button type="button" class="lyd"></button>
@@ -34,6 +35,7 @@ export function lagStatus(knapper, lydPaa) {
       const n = nivaa(s.erfaring);
       el('.nivaa').textContent = `${s.navn} · Nivå ${n}`;
       fyll('liv', s.liv, maksLiv(s));
+      el('.gull .sum').textContent = s.gull;
       // Erfaringen vises fra starten av nivået til neste nivå.
       if (n < MAKS_NIVAA) fyll('xp', s.erfaring - grense(n), grense(n + 1) - grense(n));
       else fyll('xp', 1, 1);

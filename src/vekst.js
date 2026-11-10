@@ -1,5 +1,6 @@
 import helt from './data/helt.js';
-import { UTSTYR } from './utstyr.js';
+import { UTSTYR, KISTEUTSTYR } from './utstyr.js';
+import { draktFor } from './varer.js';
 import { ANGREP } from './kamp.js';
 import { klasseFor } from './klasser.js';
 
@@ -28,15 +29,24 @@ export const maksLiv = (s) =>
   helt.maksLiv +
   (klasseFor(s.klasse)?.liv ?? 0) +
   (nivaa(s.erfaring) - 1) * helt.perNivaa.liv +
-  (beste(s.utstyr, 'rustning')?.liv ?? 0);
+  (beste(s.utstyr, 'rustning')?.liv ?? 0) +
+  (draktFor(s.drakt)?.liv ?? 0);
 
 export const skadeBonus = (s) =>
   (klasseFor(s.klasse)?.skade ?? 0) +
   Math.floor((nivaa(s.erfaring) - 1) * helt.perNivaa.skade) +
-  (beste(s.utstyr, 'vaapen')?.skade ?? 0);
+  (beste(s.utstyr, 'vaapen')?.skade ?? 0) +
+  (draktFor(s.drakt)?.skade ?? 0);
 
 // Seier gir fiendens erfaring. Hvert rette svar gir 1, også når helten taper.
 export const kampErfaring = (fiende, k) => (k.utfall === 'seier' ? fiende.erfaring : 0) + k.rette;
+
+// Gull på samme måte: fiendens gull ved seier og 1 per rett svar.
+export const kampGull = (fiende, k) => (k.utfall === 'seier' ? fiende.gull : 0) + k.rette;
+
+// Gull i kartet. Krukker og kister uten utstyr gir mer jo dypere helten er.
+export const krukkeGull = (kartNivaa = 1) => 5 * (kartNivaa + 1);
+export const kisteGull = (kartNivaa = 1) => 10 * (kartNivaa + 1);
 
 // Hva som skjer når helten får «poeng» erfaring.
 export function giErfaring(erfaring, poeng) {
@@ -47,4 +57,4 @@ export function giErfaring(erfaring, poeng) {
 }
 
 // Det kisten gir: det første i lista som helten ikke har.
-export const nesteUtstyr = (eier) => UTSTYR.find((u) => !eier.includes(u.id)) ?? null;
+export const nesteUtstyr = (eier) => KISTEUTSTYR.find((u) => !eier.includes(u.id)) ?? null;
