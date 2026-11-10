@@ -1,6 +1,6 @@
 // Gjør et tekstkart om til noe spillet kan spørre.
 // Tegn: # = vegg, . = gulv, @ = der helten starter.
-// Bokstaver er gulv med noe på, f.eks. en fiende (se src/fiender.js). < og > er trapper.
+// Bokstaver og $ er gulv med noe på, f.eks. en fiende (se src/fiender.js). < og > er trapper.
 export function lesKart(linjer) {
   const bredde = linjer[0].length;
   let start = null;
@@ -11,7 +11,7 @@ export function lesKart(linjer) {
     }
     [...linje].forEach((tegn, x) => {
       if (tegn === '@') start = { x, y };
-      else if (/[a-zæøå<>]/i.test(tegn)) merker.push({ tegn, x, y });
+      else if (/[a-zæøå<>$]/i.test(tegn)) merker.push({ tegn, x, y });
     });
   });
   if (!start) throw new Error('Kartet mangler @ (start)');

@@ -149,3 +149,53 @@ body:has(#kamp:not([hidden])) :is(#hint, #status) { display: none; }
   color: #1c1820; background: #e8c170; border: 0; cursor: pointer;
 }
 #bok .lukk:focus { outline: 3px solid #f1e9dc; }
+
+/* Butikken. */
+#butikk {
+  position: fixed; inset: 0; z-index: 2;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(10, 8, 12, 0.6);
+}
+#butikk[hidden] { display: none; }
+#butikk .rute {
+  width: min(860px, 96vw); padding: 12px 20px 16px; text-align: center;
+  background: #2a2330; border: 4px solid #e8c170;
+  box-shadow: 0 0 0 4px #1c1820, 0 0 36px rgba(232, 193, 112, 0.35), 0 12px 40px #000;
+}
+#butikk h2 { margin: 4px 0 2px; font-size: 24px; color: #e8c170; }
+#butikk .pung { margin: 0 0 10px; font-size: 18px; color: #e8c170; }
+#butikk .hylle { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+#butikk .vare {
+  position: relative; padding: 4px 2px 6px; font: inherit; font-size: 14px; color: #f1e9dc;
+  background: #1c1820; border: 3px solid #4a4052; cursor: pointer;
+}
+#butikk .vare[aria-pressed="true"] { background: #3a3020; border-color: #e8c170; }
+#butikk .vare[data-har]::after {
+  content: attr(data-har); position: absolute; top: 2px; right: 4px; font-size: 12px; color: #9bd17a;
+}
+#butikk .vare:focus { outline: 2px solid #f1e9dc; }
+#butikk .vare b { display: block; }
+#butikk .vare small { display: block; margin-top: 2px; font-size: 12px; color: #a99fb0; }
+#butikk .vare .pris { color: #e8c170; }
+#butikk .bilde { display: flex; align-items: flex-end; justify-content: center; height: 50px; }
+#butikk .figurbilde { image-rendering: pixelated; background-repeat: no-repeat; }
+#butikk .handel { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; min-height: 42px; margin-top: 12px; }
+#butikk .handel button {
+  padding: 6px 16px; font: inherit; font-size: 17px; color: #f1e9dc;
+  background: #2a2330; border: 3px solid #6b5f73; cursor: pointer;
+}
+#butikk .handel button:focus { outline: none; border-color: #e8c170; }
+#butikk .handel button:disabled { opacity: 0.4; cursor: default; }
+#butikk .handel .rabatt:not(:disabled) { border-color: #9bd17a; }
+#butikk .melding { min-height: 1.3em; margin: 8px 0 0; font-size: 17px; color: #a99fb0; }
+#butikk .melding.ok { color: #9bd17a; }
+#butikk .lukk {
+  margin-top: 8px; padding: 8px 28px; font: inherit; font-size: 20px;
+  color: #1c1820; background: #e8c170; border: 0; cursor: pointer;
+}
+#butikk .lukk:focus { outline: 3px solid #f1e9dc; }
+#status .gull { color: #e8c170; }
+
+/* Ting-knappen i kampen, til høyre over angrepene. */
+#kamp .ting { position: absolute; right: 2%; top: 63%; width: calc(48 * var(--u)); }
+#kamp .ting[hidden] { display: none; }

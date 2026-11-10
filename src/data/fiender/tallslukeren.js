@@ -9,6 +9,7 @@ export default {
   liv: 90,
   skade: 5,
   erfaring: 40,
+  gull: 50,
   boss: true,
   skjold: true,
   svak: ['is', 'hellig'],

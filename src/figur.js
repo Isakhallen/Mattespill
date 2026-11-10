@@ -17,9 +17,12 @@ export function lagAnimasjoner(scene, figur) {
 }
 
 // Et bilde i HTML av første rute i en figurs idle-animasjon, «skala» ganger større.
-export function figurbilde(scene, figur, skala = 3) {
+export const figurbilde = (scene, figur, skala = 3) => atlasbilde(scene, `${figur}_idle_anim_f0`, skala);
+
+// Et bilde i HTML av et navn i atlaset, «skala» ganger større.
+export function atlasbilde(scene, navn, skala = 3) {
   const tekstur = scene.textures.get('dungeon');
-  const f = tekstur.get(`${figur}_idle_anim_f0`);
+  const f = tekstur.get(navn);
   const kilde = tekstur.getSourceImage();
   const el = document.createElement('span');
   el.className = 'figurbilde';

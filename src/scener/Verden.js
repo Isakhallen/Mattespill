@@ -4,8 +4,9 @@ import { tegnKart, R, DYBDE } from '../tegnKart.js';
 import { lagAnimasjoner, figurbilde } from '../figur.js';
 import { fiendeFor, fiendeNivaa, lagFiende, tilNivaa } from '../fiender.js';
 import { spiller, lagre, velgKlasse } from '../spiller.js';
-import { nivaa, maksLiv, kampErfaring, giErfaring, nesteUtstyr } from '../vekst.js';
-import { KISTE, KISTE_LUKKET, KISTE_AAPEN, DRIKK, DRIKK_BILDE } from '../utstyr.js';
+import { nivaa, maksLiv, kampErfaring, kampGull, krukkeGull, kisteGull, giErfaring, nesteUtstyr } from '../vekst.js';
+import { KISTE, KISTE_LUKKET, KISTE_AAPEN, DRIKK, DRIKK_BILDE, KRUKKE, MYNT, BUTIKK, SELGER } from '../utstyr.js';
+import { lagButikk } from '../butikk.js';
 import { KLASSER } from '../klasser.js';
 import { kartFor, FORSTE, TRAPP } from '../kartliste.js';
 import { slett } from '../lagring.js';
@@ -53,6 +54,8 @@ export default class Verden extends Phaser.Scene {
       this.add.image(m.x * R, m.y * R, 'dungeon', TRAPPBILDE[m.tegn]).setOrigin(0).setDepth(1);
     }
     const ut = this.trapper.find((m) => m.tegn === data.fra);
+    this.lagMynt();
+    this.settUtButikk();
 
     lagAnimasjoner(this, spiller.figur);
     this.staar = `${spiller.figur}_idle`;
@@ -91,6 +94,7 @@ export default class Verden extends Phaser.Scene {
     );
     this.heltekort ??= lagHeltekort();
     this.bok ??= lagAngrepsbok();
+    this.butikken ??= lagButikk();
     musikk(this, this.kartId);
     this.status.vis(spiller);
     this.beskjed ??= lagBeskjed();
@@ -105,7 +109,7 @@ export default class Verden extends Phaser.Scene {
       // Gå rundt fiender, ting og trapper, bortsett fra det eleven klikker på.
       const stengt = (x, y) =>
         this.kart.vegg(x, y) ||
-        ((this.fiendeI(x, y) || this.tingI(x, y) || this.trappI(x, y)) &&
+        ((this.fiendeI(x, y) || this.tingI(x, y) || this.trappI(x, y) || this.butikkI(x, y)) &&
           !(x === til.x && y === til.y));
       this.vei = finnVei({ ...this.kart, vegg: stengt }, this.rute, til) ?? [];
     });
@@ -142,8 +146,7 @@ export default class Verden extends Phaser.Scene {
     const i = await this.beskjed.vis('Velg din helt:', valg);
     velgKlasse(spiller, KLASSER[i].id);
     lagAnimasjoner(this, spiller.figur);
-    this.staar = `${spiller.figur}_idle`;
-    this.helt.play(this.staar);
+    this.byttFigur();
     lagre();
     this.status.vis(spiller);
     await this.beskjed.vis(ETTER_VALG);
@@ -198,18 +201,47 @@ export default class Verden extends Phaser.Scene {
     }
   }
 
-  // Kister og livsdrikker. En drukket drikk er borte, en åpnet kiste står igjen åpen.
+  // Helten får figuren fra klassen eller drakten.
+  byttFigur() {
+    lagAnimasjoner(this, spiller.figur);
+    this.staar = `${spiller.figur}_idle`;
+    this.helt.play(this.staar);
+  }
+
+  // Mynten som snurrer (gullkrukker og over selgeren).
+  lagMynt() {
+    if (this.anims.exists(MYNT)) return;
+    const frames = this.anims.generateFrameNames('dungeon', { prefix: `${MYNT}_f`, start: 0, end: 3 });
+    this.anims.create({ key: MYNT, frames, frameRate: 8, repeat: -1 });
+  }
+
+  // Selgeren står i butikkruta, med en mynt som svever over hodet.
+  settUtButikk() {
+    this.butikk = this.kart.merker.find((m) => m.tegn === BUTIKK) ?? null;
+    if (!this.butikk) return;
+    lagAnimasjoner(this, SELGER);
+    const p = this.piksel(this.butikk.x, this.butikk.y);
+    this.add.sprite(p.x, p.y, 'dungeon').setOrigin(0.5, 1).setDepth(DYBDE.helt - 1).play(`${SELGER}_idle`);
+    const mynt = this.add.sprite(p.x, p.y - 22, 'dungeon').setDepth(DYBDE.over).play(MYNT);
+    this.tweens.add({ targets: mynt, y: mynt.y - 3, duration: 600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+  }
+
+  // Kister, livsdrikker og gullkrukker. En drukket drikk og plukket gull er borte,
+  // en åpnet kiste står igjen åpen.
   settUtTing() {
     for (const m of this.kart.merker) {
-      if (m.tegn !== KISTE && m.tegn !== DRIKK) continue;
+      if (![KISTE, DRIKK, KRUKKE].includes(m.tegn)) continue;
       const nokkel = this.nokkel(m);
       const brukt = spiller.aapnet.includes(nokkel);
-      if (m.tegn === DRIKK && brukt) continue;
-      const navn = m.tegn === DRIKK ? DRIKK_BILDE : brukt ? KISTE_AAPEN : KISTE_LUKKET;
-      const bilde = this.add
-        .image(m.x * R + R / 2, (m.y + 1) * R - (m.tegn === DRIKK ? 3 : 1), 'dungeon', navn)
-        .setOrigin(0.5, 1)
-        .setDepth(DYBDE.helt - 1);
+      if (m.tegn !== KISTE && brukt) continue;
+      const x = m.x * R + R / 2;
+      let bilde;
+      if (m.tegn === KRUKKE) bilde = this.add.sprite(x, (m.y + 1) * R - 4, 'dungeon').play(MYNT);
+      else {
+        const navn = m.tegn === DRIKK ? DRIKK_BILDE : brukt ? KISTE_AAPEN : KISTE_LUKKET;
+        bilde = this.add.image(x, (m.y + 1) * R - (m.tegn === DRIKK ? 3 : 1), 'dungeon', navn);
+      }
+      bilde.setOrigin(0.5, 1).setDepth(DYBDE.helt - 1);
       this.ting.push({ tegn: m.tegn, x: m.x, y: m.y, nokkel, brukt, bilde });
     }
   }
@@ -229,6 +261,10 @@ export default class Verden extends Phaser.Scene {
 
   trappI(x, y) {
     return this.trapper.find((m) => m.x === x && m.y === y);
+  }
+
+  butikkI(x, y) {
+    return this.butikk && this.butikk.x === x && this.butikk.y === y;
   }
 
   // Stopper helten mens noe vises oppå kartet.
@@ -259,6 +295,36 @@ export default class Verden extends Phaser.Scene {
     this.slipp();
   }
 
+  // Butikken. Drakten kan ha byttet figur på helten.
+  async handle() {
+    if (this.opptatt) return;
+    this.stopp();
+    await this.butikken.vis(spiller, {
+      scene: this,
+      rute: this.oppgaverute,
+      lyd: (navn) => spill(this, navn),
+      endret: () => this.status.vis(spiller),
+    });
+    this.byttFigur();
+    lagre();
+    this.slipp();
+  }
+
+  // Gullkrukka gir gull og er borte.
+  async plukk(krukke) {
+    this.stopp();
+    const gull = krukkeGull(this.kartData.nivaa);
+    spiller.gull += gull;
+    spiller.aapnet.push(krukke.nokkel);
+    krukke.bilde.destroy();
+    this.ting = this.ting.filter((t) => t !== krukke);
+    spill(this, 'gull');
+    lagre();
+    this.status.vis(spiller);
+    await this.beskjed.vis(`Du fant ${gull} gull!`);
+    this.slipp();
+  }
+
   async oving() {
     if (this.opptatt) return;
     this.stopp();
@@ -267,6 +333,7 @@ export default class Verden extends Phaser.Scene {
   }
 
   // Kisten gir neste utstyr. Det beste tas i bruk av seg selv.
+  // Når alt utstyret er funnet, gir kisten gull.
   async aapneKiste(kiste) {
     if (kiste.brukt) return;
     this.stopp();
@@ -274,8 +341,12 @@ export default class Verden extends Phaser.Scene {
     kiste.bilde.setFrame(KISTE_AAPEN);
     spiller.aapnet.push(kiste.nokkel);
     const u = nesteUtstyr(spiller.utstyr);
-    let tekst = 'Kisten er tom.';
-    if (u) {
+    const gull = kisteGull(this.kartData.nivaa);
+    let tekst = `Kisten har ${gull} gull!`;
+    if (!u) {
+      spiller.gull += gull;
+      spill(this, 'gull');
+    } else {
       const foer = maksLiv(spiller);
       spiller.utstyr.push(u.id);
       spiller.liv += maksLiv(spiller) - foer;
@@ -332,12 +403,14 @@ export default class Verden extends Phaser.Scene {
   oppgjor(fiende, k) {
     const seier = k.utfall === 'seier';
     const poeng = kampErfaring(fiende, k);
+    const gull = kampGull(fiende, k);
     const e = giErfaring(spiller.erfaring, poeng);
     spiller.erfaring = e.erfaring;
+    spiller.gull += gull;
     spiller.liv = k.heltLiv;
     fiende.liv = k.fiendeLiv; // fienden beholder skaden til neste forsøk
 
-    const pluss = poeng ? ` +${poeng} erfaring.` : '';
+    const pluss = (poeng ? ` +${poeng} erfaring.` : '') + (gull ? ` +${gull} gull.` : '');
     const tekster = [
       seier ? { tekst: `Du vant!${pluss}`, lyd: 'seier' } : { tekst: `Du er utslitt og må hvile.${pluss}` },
     ];
@@ -420,7 +493,12 @@ export default class Verden extends Phaser.Scene {
     const ting = this.tingI(x, y);
     if (ting) {
       if (ting.tegn === DRIKK) this.drikk(ting);
+      else if (ting.tegn === KRUKKE) this.plukk(ting);
       else this.aapneKiste(ting);
+      return false;
+    }
+    if (this.butikkI(x, y)) {
+      this.handle();
       return false;
     }
     const trapp = this.trappI(x, y);

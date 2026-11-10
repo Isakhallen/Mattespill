@@ -4,7 +4,7 @@ import { lesKart, vedSiden } from '../src/kart.js';
 import { finnVei } from '../src/vei.js';
 import { KART, FORSTE, kartFor, TRAPP } from '../src/kartliste.js';
 import { fiendeFor } from '../src/fiender.js';
-import { KISTE, DRIKK, UTSTYR } from '../src/utstyr.js';
+import { KISTE, DRIKK, KRUKKE, BUTIKK, KISTEUTSTYR } from '../src/utstyr.js';
 
 const lest = KART.map((k) => ({ data: k, kart: lesKart(k.ruter) }));
 
@@ -32,7 +32,7 @@ test('alle tegn i kartene er kjent, og trappene går til et kart med motsatt tra
   for (const { data, kart } of lest) {
     for (const m of kart.merker) {
       const trapp = TRAPP[m.tegn];
-      assert.ok(fiendeFor(m.tegn) || m.tegn === KISTE || m.tegn === DRIKK || trapp,
+      assert.ok(fiendeFor(m.tegn) || [KISTE, DRIKK, KRUKKE, BUTIKK].includes(m.tegn) || trapp,
         `${data.id}: ukjent tegn «${m.tegn}» i ${m.x},${m.y}`);
       if (!trapp) continue;
       const mal = kartFor(data[trapp.til]);
@@ -49,7 +49,7 @@ test('eventyret har én boss, nok kister til alt utstyret og fiender som blir st
   const alle = lest.flatMap(({ kart }) => kart.merker);
   const bosser = alle.filter((m) => fiendeFor(m.tegn)?.boss);
   assert.equal(bosser.length, 1);
-  assert.ok(alle.filter((m) => m.tegn === KISTE).length >= UTSTYR.length);
+  assert.ok(alle.filter((m) => m.tegn === KISTE).length >= KISTEUTSTYR.length);
   const snitt = ({ kart }) => {
     const f = kart.merker.map((m) => fiendeFor(m.tegn)).filter((t) => t && !t.boss);
     return f.reduce((a, t) => a + t.liv, 0) / f.length;
