@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { ANGREP, nyKamp, oppgavetrinn, runde, skadeMot, vistSkade, virkning, hvilEtter } from '../src/kamp.js';
-import { lagSpiller } from '../src/spiller.js';
+import { ANGREP, MAKS_ANGREP, nyKamp, oppgavetrinn, runde, skadeMot, vistSkade, virkning, hvilEtter, motFiende, medTall } from '../src/kamp.js';
+import { boka, bytt, verdi } from '../src/angrepsbok.js';
+import { lagSpiller, tilLagring } from '../src/spiller.js';
 import { grense, nivaa, maksLiv, skadeBonus } from '../src/vekst.js';
 import { KLASSER } from '../src/klasser.js';
 import { FIENDER, fiendeFor, fiendeNivaa, lagFiende, tilNivaa } from '../src/fiender.js';
@@ -28,9 +29,10 @@ test('riktig svar treffer, feil svar bommer, og fienden slår tilbake', () => {
   const start = nyKamp(20, 12, 2);
   const treff = runde(start, lett, true);
   assert.deepEqual(
-    { ...treff },
-    { heltLiv: 18, fiendeLiv: 12 - lett.skade, fiendeSkade: 2, traff: lett.skade, slag: 2, utfall: null },
+    [treff.heltLiv, treff.fiendeLiv, treff.traff, treff.slag, treff.heling, treff.utfall],
+    [18, 12 - lett.skade, lett.skade, 2, 0, null],
   );
+  assert.deepEqual(treff.merker, {});
   const bom = runde(start, tungt, false);
   assert.equal(bom.fiendeLiv, 12);
   assert.equal(bom.traff, 0);
@@ -107,7 +109,7 @@ test('svakheter gir dobbel skade og det fienden tåler halv, uten at det står n
   for (const f of FIENDER) {
     assert.ok(f.svak?.length, `${f.id} har ingen svakhet`);
     for (const e of [...f.svak, ...(f.sterk ?? [])]) assert.ok(elementer.has(e), `${f.id}: ${e}`);
-    for (const t of [...(f.foer ?? []), ...(f.igjen ?? [])]) assert.doesNotMatch(t, /(^|\s)(svak|is|ild|lyn|trolldom)/i);
+    for (const t of [...(f.foer ?? []), ...(f.igjen ?? [])]) assert.doesNotMatch(t, /(^|\s)(svak|is|ild|lyn|gift|hellig|jord|trolldom)/i);
   }
   const imp = fiendeFor('i');
   const is = { id: 'x', element: 'is', skade: 10 };
@@ -146,3 +148,86 @@ test('fiendene har egne bokstaver og figurer som finnes i atlaset', () => {
   }
 });
 
+
+const angrep = (id) => ANGREP.find((a) => a.id === id);
+
+test('12–15 angrep med eget navn, element og oppgave, og de sterkeste hviler', () => {
+  assert.ok(ANGREP.length >= 12 && ANGREP.length <= 15);
+  assert.equal(new Set(ANGREP.map((a) => a.id)).size, ANGREP.length);
+  for (const a of ANGREP) {
+    assert.ok(a.element && a.navn, a.id);
+    assert.ok(a.type || a.trinn !== undefined, `${a.id} mangler oppgave`);
+    if (a.virker) assert.ok(a.runder >= 1 && a.hvile >= 1, a.id);
+    if ((a.kraft ?? 1) > 1) assert.ok(a.hvile >= 1, `${a.id} er sterk, men hviler ikke`);
+  }
+});
+
+test('gift og brann skader hver tur, og merket går over', () => {
+  const pil = medTall(angrep('giftpil'), 1);
+  assert.ok(pil.prikk >= 1);
+  let k = runde(nyKamp(30, 100, 3), pil, true);
+  assert.equal(k.fiendeLiv, 100 - pil.skade - pil.prikk);
+  assert.equal(k.mellom.fiendeLiv, 100 - pil.skade);
+  assert.deepEqual(k.prikker, [{ navn: 'gift', skade: pil.prikk }]);
+  for (let i = 1; i < pil.runder; i++) k = runde(k, { skade: 0 }, false);
+  assert.equal(k.fiendeLiv, 100 - pil.skade - pil.runder * pil.prikk);
+  assert.deepEqual(k.merker, {});
+  assert.deepEqual(runde(k, { skade: 0 }, false).prikker, []);
+  assert.equal(runde(nyKamp(30, 100, 3), pil, false).merker.gift, undefined);
+  // Gift kan vinne kampen, og da slår ikke fienden.
+  const slutt = runde(nyKamp(30, pil.skade + 1, 3), pil, true);
+  assert.deepEqual([slutt.utfall, slutt.slag], ['seier', 0]);
+});
+
+test('frys gjør at fienden står over, svekket og skjold gir halve slag', () => {
+  const k = runde(nyKamp(30, 100, 8), medTall(angrep('frost'), 5), true);
+  assert.deepEqual([k.frosset, k.slag, k.heltLiv], [true, 0, 30]);
+  assert.equal(runde(k, { skade: 1 }, true).slag, 8);
+  const skjelv = runde(nyKamp(30, 100, 8), medTall(angrep('jordskjelv'), 12), true);
+  assert.equal(skjelv.slag, 4);
+  assert.equal(runde(skjelv, { skade: 1 }, false).slag, 4);
+  const skjold = runde(nyKamp(30, 100, 8), medTall(angrep('skjold'), 1), true);
+  assert.deepEqual([skjold.traff, skjold.slag, skjold.aktive], [0, 4, ['skjold']]);
+  const begge = runde({ ...skjelv, merker: { ...skjelv.merker, skjold: { runder: 2 } } }, { skade: 1 }, true);
+  assert.equal(begge.slag, 2);
+});
+
+test('helbred og vampyrbitt gir liv, men aldri mer enn fullt', () => {
+  const helbred = medTall(angrep('helbred'), 4);
+  const k = runde(nyKamp(10, 50, 3, 40), helbred, true);
+  assert.deepEqual([k.traff, k.heling, k.fiendeLiv, k.heltLiv], [0, helbred.skade, 50, 10 + helbred.skade - 3]);
+  assert.equal(runde(nyKamp(39, 50, 3, 40), helbred, true).heling, 1);
+  assert.equal(runde(nyKamp(10, 50, 3, 40), helbred, false).heling, 0);
+  assert.equal(runde(nyKamp(10, 50, 3, 40), { ...angrep('vampyrbitt'), skade: 10 }, true).heling, 5);
+  // Fiendens svakheter og det den tåler, gjelder ikke helbred.
+  assert.equal(motFiende(helbred, FIENDER.find((f) => f.boss)).skade, helbred.skade);
+});
+
+test('svakheter gjelder også gift og brann', () => {
+  const pil = medTall(angrep('giftpil'), 2);
+  assert.equal(motFiende(pil, fiendeFor('g')).prikk, pil.prikk * 2);
+  assert.ok(motFiende(pil, FIENDER.find((f) => f.boss)).prikk < pil.prikk);
+});
+
+test('angrepsboka: alle angrep står der, låste med nivå, og eleven velger høyst seks', () => {
+  const s = lagSpiller({ erfaring: grense(5) });
+  const b = boka(s);
+  assert.equal(b.length, ANGREP.length);
+  assert.deepEqual(b.find((a) => a.id === 'jordskjelv').linjer, ['Nivå 9']);
+  assert.ok(b.filter((a) => a.valgt).length <= MAKS_ANGREP);
+  for (const a of b) for (const l of a.linjer) assert.doesNotMatch(l, /svak|tåler|element/i);
+  assert.ok(b.find((a) => a.id === 'tungt').linjer.some((l) => /skade/.test(l)));
+  let v = ['lett'];
+  assert.deepEqual(bytt(v, 'lett'), ['lett']); // minst ett
+  for (const id of ['meteor', 'tungt', 'lyn', 'ildkule', 'storm']) v = bytt(v, id);
+  assert.deepEqual(v, ['lett', 'tungt', 'ildkule', 'lyn', 'storm', 'meteor']);
+  assert.equal(bytt(v, 'frost'), v); // fullt
+  assert.deepEqual(bytt(v, 'lyn'), ['lett', 'tungt', 'ildkule', 'storm', 'meteor']);
+  assert.equal(verdi({ heler: true, skade: 7 }), '+7 liv');
+  assert.equal(verdi({ ...angrep('skjold'), skade: 7 }), 'Halve slag');
+  // Valget lagres og tåler rare verdier.
+  s.angrep = ['tungt', 'meteor'];
+  assert.deepEqual(lagSpiller(tilLagring(s)).angrep, ['tungt', 'meteor']);
+  assert.deepEqual(lagSpiller({ angrep: ['x', 3] }).angrep, ['lett', 'tungt']);
+  assert.equal(lagSpiller({ erfaring: 1e6, angrep: ANGREP.map((a) => a.id) }).angrep.length, MAKS_ANGREP);
+});

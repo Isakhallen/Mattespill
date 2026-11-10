@@ -7,6 +7,6 @@ export default {
   liv: 50,
   skade: 5,
   erfaring: 10,
-  svak: ['is'],
+  svak: ['is', 'jord'],
   sterk: ['slag'],
 };

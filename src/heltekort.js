@@ -1,5 +1,5 @@
 import { nivaa, maksLiv, skadeBonus, beste } from './vekst.js';
-import { ANGREP } from './kamp.js';
+import { opplaast } from './kamp.js';
 import { figurbilde } from './figur.js';
 
 // Det som står på heltekortet. Uten HTML, så det kan testes med Node.
@@ -13,7 +13,7 @@ export function kortet(s) {
       ['Ekstra skade', `+${skadeBonus(s)}`],
       ['Våpen', beste(s.utstyr, 'vaapen')?.navn ?? '–'],
       ['Rustning', beste(s.utstyr, 'rustning')?.navn ?? '–'],
-      ['Angrep', ANGREP.filter((a) => (a.nivaa ?? 1) <= n).map((a) => a.navn).join(', ')],
+      ['Angrep', opplaast(n).filter((a) => s.angrep.includes(a.id)).map((a) => a.navn).join(', ')],
     ],
     merke: s.seire ? `★ Slo Tallslukeren ${ganger}!` : 'Tallslukeren er ikke slått ennå.',
   };
