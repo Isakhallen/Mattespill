@@ -33,30 +33,33 @@ Elevene skal få lyst til å regne, og alle skal føle mestring. Når hensyn kol
 Læreren trenger ikke godkjenne hver bøtte. Bygg bøttene etter planen, test selv og commit etter hver bøtte. Stopp når chatten blir lang. Neste bøtte tas da i en ny chat, så skriv status og planen for neste bøtte her før du stopper.
 
 1. **Gå rundt** (ferdig): helt som går rundt på et testkart.
-2. **Oppgavene** (neste): oppgavetyper, nivåstige og tilpasning. Læreren ser over en tabell med nivåene.
-3. **Kampen**: fiender på kartet, turbasert kamp, lett og tungt angrep. Publiseres på en lenke.
+2. **Oppgavene** (ferdig): oppgavetyper, nivåstige og tilpasning. Tabellen med nivåene ligger i `NIVAAER.md`.
+3. **Kampen** (neste): fiender på kartet, turbasert kamp, lett og tungt angrep. Publiseres på en lenke.
 4. **Helten vokser**: erfaringspoeng, nivåer, nye angrep, utstyr og lagring.
 5. **Første eventyr**: område med flere fiender, boss, klassevalg og kort historie.
 6. **Finpuss**: lyd, effekter, heltekort og test med klassen.
 
-## Slik står det etter bøtte 1
+## Slik står det etter bøtte 2
 
 - Kjøres med `python -m http.server 8010` i repoet og <http://localhost:8010>.
 - `src/kart.js` leser tekstkart (`#` vegg, `.` gulv, `@` start), `src/vei.js` finner vei, `src/tegnKart.js` tegner flisene og `src/scener/Verden.js` styrer helten. Spillet ligger på `window.spill`.
 - Atlaset `assets/dungeon.png` + `.json` har alle 370 navn fra pakkens `tile_list`, for eksempel `knight_m_run_anim_f0`. Det lages på nytt med `node verktoy/lag-atlas.mjs kilder/0x72/0x72_DungeonTilesetII_v1.7`. Pakken ligger utpakket i `kilder/0x72/`, utenfor git.
-- Logikk testes med Node (`package.json` har bare `"type": "module"`).
+- Oppgavetypene ligger i `src/data/oppgaver/`, én fil per type. `src/oppgaver.js` setter dem sammen til stigen `STIGE` (12 trinn) og har `lagOppgave(trinn)`, `tolkSvar` og `erRett`. `NIVAAER.md` lages med `node verktoy/lag-nivaatabell.mjs`.
+- `src/tilpasning.js`: opp etter 2 rette på rad, ned etter 2 feil på rad. Trinnet ligger foreløpig bare i minnet.
+- `src/oppgaverute.js` viser en oppgave som HTML oppå spillet: `await rute.spor(oppgave, { topp, bunn, taster })` gir `'rett'` eller `'feil'`. `Verden.opptatt` stopper helten mens ruta er åpen.
+- Tast O starter øving (`src/oving.js`) med + og − for å bytte trinn. Det er en lærertast som kan fjernes når kampen er på plass.
+- Logikk testes med `node --test test/` (`package.json` har bare `"type": "module"`).
 - Test i skjult Edge: bruk ny `--user-data-dir` hver gang, ellers kommer gamle filer fra cache. Spill-løkka går nesten ikke med `--virtual-time-budget`. En midlertidig testside må kalle `spill.loop.stop()` og så `spill.step(tid, 16)` i en løkke med `await` på 16 ms mellom hvert bilde, og resultatet leses med `--dump-dom`.
 
-## Plan for bøtte 2
+## Plan for bøtte 3
 
-1. Oppgavetyper som data: én liten fil per type i `src/data/oppgaver/`. Hver lager en oppgave (tekst, svar, kort forklaring) for et trinn, med tall fra «pene» lister.
-2. Nivåstige: én felles stige på ca. 12 trinn, fra «halvparten av 10» til prosentpoeng. Hver oppgavetype dekker noen av trinnene. Tabellen `NIVAAER.md` lages fra dataene, med tre eksempler per trinn.
-3. Tilpasning i `src/tilpasning.js`: opp etter 2 rette på rad, ned etter 2 feil på rad.
-4. Oppgaverute som HTML oppå spillet: skriv tall og trykk Enter. Komma og punktum godtas. Feil svar gir riktig svar og en kort forklaring, uten straff.
-5. Prøving: tast O i spillet gir oppgaver på rad med trinnet synlig, og + og − bytter trinn.
-6. Node-test: mange oppgaver per trinn, alle svar er hele tall eller har høyst to desimaler.
-
-Sjekkpunkt: læreren leser tabellen og prøver oppgaver i spillet.
+1. Fiender som data i `src/data/fiender/`: navn, figur i atlaset, liv og skade. De settes på kartet med egne bokstaver i tekstkartet.
+2. Kampen starter når helten går inn i en fiende. Kampvisning oppå kartet: helt og fiende, livslinjer og to valg, lett og tungt angrep. Turbasert.
+3. Angrep som data i `src/data/angrep/`: navn, skade og hvor på stigen oppgaven hentes. Lett angrep gir en oppgave et par trinn under elevens trinn, tungt angrep gir elevens eget trinn og mer skade. Riktig svar treffer, feil svar bommer. Oppgavetypen følger av trinnet. I bøtte 4 kan nye angrep bindes til bestemte oppgavetyper.
+4. Fiendens tur gir litt skade uten oppgave. Ingen «game over»: går helten tom for liv, våkner den ved start med fullt liv.
+5. Hvert svar oppdaterer elevens trinn med `src/tilpasning.js`. Trinnet vises ikke for eleven i kamp.
+6. Publisering på GitHub Pages. Læreren lager repoet i nettleseren (`gh` mangler). Gi kommandoene for `git remote add` og `git push`, og si hvor Pages slås på.
+7. Kampreglene testes med Node, og flyten i skjult Edge.
 
 Lyd, musikk og effekter kan senere hentes fra Ninja Adventure, <https://github.com/pixel-boy/NinjaAdventure> (CC0).
 

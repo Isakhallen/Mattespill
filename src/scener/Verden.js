@@ -1,6 +1,8 @@
 import { lesKart } from '../kart.js';
 import { finnVei } from '../vei.js';
 import { tegnKart, R, DYBDE } from '../tegnKart.js';
+import { lagOppgaverute } from '../oppgaverute.js';
+import { kjorOving } from '../oving.js';
 import testkart from '../data/kart/test.js';
 
 const STEGTID = 130; // ms per rute
@@ -48,7 +50,11 @@ export default class Verden extends Phaser.Scene {
     kamera.startFollow(this.helt, true);
 
     this.taster = this.input.keyboard.addKeys('UP,DOWN,LEFT,RIGHT,W,A,S,D');
+    this.oppgaverute = lagOppgaverute();
+    this.opptatt = false; // sant mens en oppgave vises
+    this.input.keyboard.on('keydown-O', () => this.oving());
     this.input.on('pointerdown', (peker) => {
+      if (this.opptatt) return;
       const til = { x: Math.floor(peker.worldX / R), y: Math.floor(peker.worldY / R) };
       this.vei = finnVei(this.kart, this.rute, til) ?? [];
     });
@@ -59,8 +65,21 @@ export default class Verden extends Phaser.Scene {
     return { x: x * R + R / 2, y: (y + 1) * R - 4 };
   }
 
+  async oving() {
+    if (this.opptatt) return;
+    this.opptatt = true;
+    this.vei = [];
+    this.input.keyboard.resetKeys(); // ellers kan en tast bli hengende nede
+    await kjorOving(this.oppgaverute);
+    this.opptatt = false;
+  }
+
   update() {
     if (this.gaar) return;
+    if (this.opptatt) {
+      this.helt.play('helt-staar', true);
+      return;
+    }
     const t = this.taster;
     let d = null;
     if (t.LEFT.isDown || t.A.isDown) d = [-1, 0];
