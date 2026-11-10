@@ -20,11 +20,9 @@ test('heltekortet viser nivå, utstyr, angrep og bossen', () => {
   assert.doesNotMatch(linje['Angrep'], /Isspyd/);
   s.angrep = ['tungt', 'lyn'];
   assert.equal(Object.fromEntries(kortet(s).linjer)['Angrep'], 'Tungt angrep, Lyn');
-  assert.match(k.merke, /ikke slått/);
-  s.seire = 1;
-  assert.match(kortet(s).merke, /én gang/);
-  s.seire = 3;
-  assert.match(kortet(s).merke, /3 ganger/);
+  assert.match(k.merke, /Ingen boss/);
+  s.bosser = ['tallslukeren'];
+  assert.match(kortet(s).merke, /1 av [0-9]+ bosser/);
 });
 
 test('seire lagres og tåler rare verdier', () => {
@@ -42,4 +40,10 @@ test('lyden er på til eleven slår den av', () => {
   skrivLyd(true, l);
   assert.equal(lesLyd(l), true);
   assert.equal(lesLyd({ getItem: () => { throw new Error(); } }), true);
+});
+
+test('slåtte bosser lagres, og en gammel seier betyr at Tallslukeren er slått', () => {
+  assert.deepEqual(lagSpiller({}).bosser, []);
+  assert.deepEqual(lagSpiller({ seire: 1 }).bosser, ['tallslukeren']);
+  assert.deepEqual(lagSpiller(tilLagring(lagSpiller({ bosser: ['tallslukeren', 'halvdan'] }))).bosser, ['tallslukeren', 'halvdan']);
 });

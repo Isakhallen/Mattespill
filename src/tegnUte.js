@@ -9,7 +9,8 @@ const MORKT = 0x1b1424; // inne i portene
 const spred = (x, y) => ((x * 73856093) ^ (y * 19349663)) >>> 0;
 const velg = (liste, x, y) => liste[spred(x, y) % liste.length];
 
-export function tegnUte(scene, data) {
+// «aapen(siffer)» sier om porten er åpen (standard: den har et kart).
+export function tegnUte(scene, data, aapen = (siffer) => !!data.innganger?.[siffer]?.kart) {
   const ruter = data.ruter;
   const bredde = ruter[0].length;
   const hoyde = ruter.length;
@@ -18,7 +19,6 @@ export function tegnUte(scene, data) {
   const skog = (x, y) => x < 0 || y < 0 || x >= bredde || y >= hoyde || tegn(x, y) === '#';
   const vei = (x, y) => /[:@%0-9]/.test(tegn(x, y) ?? ''); // brønnen står på torget
   const port = (x, y) => /[0-9]/.test(tegn(x, y) ?? '');
-  const aapen = (siffer) => !!data.innganger?.[siffer]?.kart;
 
   const bunn = scene.add.renderTexture(0, 0, bredde * R, hoyde * R).setOrigin(0).setDepth(0);
   const topp = scene.add.renderTexture(0, 0, bredde * R, hoyde * R).setOrigin(0).setDepth(DYBDE.over);

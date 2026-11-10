@@ -16,7 +16,8 @@ const tekster = (x) => (Array.isArray(x) ? [...new Set(x.filter((t) => typeof t 
 // Lager spilleren fra det som er lagret. Det som mangler eller er rart, får startverdien.
 // «klasse» er null til eleven har valgt. «kart» er kartet helten står i.
 // «slaatt» og «aapnet» er fiender og ting på kartet, skrevet som «kart:x,y».
-// «sett» er historietekster eleven har sett. «seire» er hvor mange ganger bossen er slått.
+// «sett» er historietekster eleven har sett. «seire» er hvor mange ganger en boss er slått,
+// og «bosser» er id-ene til bossene som er slått minst én gang (de åpner nye porter).
 // «oppdrag» er { id: { steg, antall } } (se src/folk.js).
 // «angrep» er angrepene eleven har tatt med fra angrepsboka (høyst MAKS_ANGREP).
 // «ting» er { id: antall } for drikker og bomber, «drakter» er draktene eleven eier,
@@ -38,12 +39,15 @@ export function lagSpiller(d) {
     aapnet: tekster(d.aapnet),
     sett: tekster(d.sett),
     seire: heltall(d.seire, 0, 1e6) ? d.seire : 0,
+    bosser: tekster(d.bosser),
     oppdrag: lesOppdrag(d.oppdrag),
     gull: heltall(d.gull, 0, 1e6) ? d.gull : 0,
     ting,
     drakter,
     drakt: drakter.includes(d.drakt) ? d.drakt : null,
   };
+  // Lagret før bøtte 12: en seier betyr at Tallslukeren er slått.
+  if (s.seire && !s.bosser.length) s.bosser.push('tallslukeren');
   s.figur = figurFor(s);
   s.liv = heltall(d.liv, 1, maksLiv(s)) ? d.liv : maksLiv(s);
   const angrep = tekster(d.angrep).filter((id) => ANGREP.some((a) => a.id === id));
@@ -73,6 +77,7 @@ export const tilLagring = (s) => ({
   aapnet: s.aapnet,
   sett: s.sett,
   seire: s.seire,
+  bosser: s.bosser,
   angrep: s.angrep,
   oppdrag: s.oppdrag,
   gull: s.gull,

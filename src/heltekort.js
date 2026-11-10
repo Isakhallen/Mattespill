@@ -1,11 +1,13 @@
 import { nivaa, maksLiv, skadeBonus, beste } from './vekst.js';
 import { opplaast } from './kamp.js';
 import { figurbilde } from './figur.js';
+import { FIENDER } from './fiender.js';
+
+const BOSSER = FIENDER.filter((f) => f.boss);
 
 // Det som står på heltekortet. Uten HTML, så det kan testes med Node.
 export function kortet(s) {
   const n = nivaa(s.erfaring);
-  const ganger = s.seire === 1 ? 'én gang' : `${s.seire} ganger`;
   return {
     tittel: `${s.navn} · Nivå ${n}`,
     linjer: [
@@ -16,7 +18,9 @@ export function kortet(s) {
       ['Gull', s.gull],
       ['Angrep', opplaast(n).filter((a) => s.angrep.includes(a.id)).map((a) => a.navn).join(', ')],
     ],
-    merke: s.seire ? `★ Slo Tallslukeren ${ganger}!` : 'Tallslukeren er ikke slått ennå.',
+    merke: s.bosser.length
+      ? `★ ${s.bosser.length} av ${BOSSER.length} bosser slått!`
+      : 'Ingen boss er slått ennå.',
   };
 }
 
@@ -60,7 +64,7 @@ export function lagHeltekort() {
         }),
       );
       el('.merke').textContent = k.merke;
-      el('.merke').classList.toggle('slaatt', s.seire > 0);
+      el('.merke').classList.toggle('slaatt', s.bosser.length > 0);
       rot.hidden = false;
       el('button').focus();
       return new Promise((r) => {

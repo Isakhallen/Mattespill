@@ -7,14 +7,15 @@ export function gulvnavn(x, y) {
   return 'floor_' + (v < 7 ? v + 2 : 1); // mest floor_1, litt variasjon
 }
 
-export function tegnKart(scene, kart) {
+// «farge» toner flisene (hvert område har sin farge).
+export function tegnKart(scene, kart, farge) {
   const gulv = (x, y) => !kart.vegg(x, y);
   // Vegg med gulv over eller under vises som murvegg forfra.
   const front = (x, y) => kart.vegg(x, y) && (gulv(x, y + 1) || gulv(x, y - 1));
   const aapen = (x, y) => gulv(x, y) || front(x, y);
   const sidekant = (x, y, dx) => kart.vegg(x, y) && !front(x, y) && aapen(x + dx, y);
   const bilde = (x, y, navn, dybde = 0) =>
-    scene.add.image(x * R, y * R, 'dungeon', navn).setOrigin(0).setDepth(dybde);
+    scene.add.image(x * R, y * R, 'dungeon', navn).setOrigin(0).setDepth(dybde).setTint(farge ?? 0xffffff);
 
   for (let y = 0; y < kart.hoyde; y++) {
     for (let x = 0; x < kart.bredde; x++) {

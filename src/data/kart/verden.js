@@ -1,5 +1,6 @@
 // Verdenskartet over bakken, med landsbyen i midten. Tegnene står i src/data/ute.js.
 // Sifrene er porter ned under bakken. Porter uten kart er stengt til senere.
+// «krever» er bossen som må være slått før porten åpner seg.
 export default {
   id: 'verden', // brukes i lagringen
   navn: 'Landsbyen',
@@ -7,7 +8,7 @@ export default {
   nivaa: 1,
   innganger: {
     1: { navn: 'Kjelleren', kart: 'kjelleren' },
-    2: { navn: 'Skogen' },
+    2: { navn: 'Skogen', kart: 'skogen', krever: 'tallslukeren' },
     3: { navn: 'Sumpen' },
     4: { navn: 'Ishula' },
     5: { navn: 'Lavagrotta' },

@@ -49,8 +49,8 @@ test('fienden slår ikke når den er slått, og livet går aldri under 0', () =>
 // Helten slik den er når den kommer til kartet: nivå og utstyr fra kistene.
 const UTSTYR_PAA = { 1: [], 2: ['rustentSverd'], 3: ['rustentSverd', 'laervest'], 4: ['sverd', 'ringbrynje'], 5: ['sverd', 'ringbrynje'], 6: ['gullsverd', 'ringbrynje'] };
 const heltePaa = (kart) =>
-  (kart.nivaa === 1 ? [1, 2, 3] : [4, 5, 6]).flatMap((n) =>
-    KLASSER.map((kl) => lagSpiller({ erfaring: grense(n), klasse: kl.id, utstyr: UTSTYR_PAA[n] })),
+  (kart.nivaa === 1 ? [1, 2, 3] : kart.nivaa < 4 ? [4, 5, 6] : [0, 1, 2].map((d) => kart.nivaa + d)).flatMap((n) =>
+    KLASSER.map((kl) => lagSpiller({ erfaring: grense(n), klasse: kl.id, utstyr: UTSTYR_PAA[Math.min(n, 6)] })),
   );
 const fienderI = (kart) => [...new Set(kart.ruter.join('').split('').map(fiendeFor).filter(Boolean))];
 const tungtFor = (s) => Math.round(tungt.skade * (1 + skadeBonus(s) / 10));

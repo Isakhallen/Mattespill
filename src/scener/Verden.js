@@ -3,13 +3,13 @@ import { finnVei } from '../vei.js';
 import { tegnKart, R, DYBDE } from '../tegnKart.js';
 import { tegnUte } from '../tegnUte.js';
 import { lagAnimasjoner, figurbilde } from '../figur.js';
-import { fiendeFor, fiendeNivaa, lagFiende, tilNivaa } from '../fiender.js';
+import { FIENDER, fiendeFor, fiendeNivaa, lagFiende, tilNivaa } from '../fiender.js';
 import { spiller, lagre, velgKlasse } from '../spiller.js';
 import { nivaa, maksLiv, kampErfaring, kampGull, krukkeGull, kisteGull, giErfaring, nesteUtstyr } from '../vekst.js';
 import { KISTE, KISTE_LUKKET, KISTE_AAPEN, DRIKK, DRIKK_BILDE, KRUKKE, MYNT, BUTIKK, SELGER } from '../utstyr.js';
 import { lagButikk } from '../butikk.js';
 import { KLASSER } from '../klasser.js';
-import { kartFor, FORSTE, lesKartData, UTGANG, utgang, inngangFra } from '../kartliste.js';
+import { kartFor, FORSTE, lesKartData, UTGANG, utgang, inngangFra, portAapen, portEtter } from '../kartliste.js';
 import { slett } from '../lagring.js';
 import { lagOppgaverute } from '../oppgaverute.js';
 import { lagKampvisning } from '../kampvisning.js';
@@ -54,13 +54,13 @@ export default class Verden extends Phaser.Scene {
     this.kartId = this.kartData.id;
     this.kart = lesKartData(this.kartData);
     this.ute = this.kartData.stil === 'ute';
-    if (this.ute) tegnUte(this, this.kartData);
-    else tegnKart(this, this.kart);
+    if (this.ute) tegnUte(this, this.kartData, (s) => portAapen(this.kartData.innganger[s], spiller.bosser));
+    else tegnKart(this, this.kart, this.kartData.farge);
     spiller.kart = this.kartId;
     this.utganger = this.kart.merker.filter((m) => UTGANG.test(m.tegn));
     for (const m of this.utganger) {
       if (!TRAPPBILDE[m.tegn]) continue; // portene er tegnet med kartet
-      this.add.image(m.x * R, m.y * R, 'dungeon', TRAPPBILDE[m.tegn]).setOrigin(0).setDepth(1);
+      this.add.image(m.x * R, m.y * R, 'dungeon', TRAPPBILDE[m.tegn]).setOrigin(0).setDepth(1).setTint(this.kartData.farge ?? 0xffffff);
     }
     const ut = data.fra && inngangFra(this.kartData, this.kart, data.fra);
     this.lagMynt();
@@ -194,16 +194,19 @@ export default class Verden extends Phaser.Scene {
     this.cameras.main.once('camerafadeoutcomplete', () => this.scene.restart({ kart, fra }));
   }
 
-  // Trapp eller port. En port uten kart er stengt til et senere eventyr.
+  // Trapp eller port. En port er låst til bossen i «krever» er slått, og en port
+  // uten kart er stengt til et senere eventyr.
   async gaaUt(m) {
     const u = utgang(this.kartData, m.tegn);
-    if (u?.kart) {
+    if (!u) return;
+    if (portAapen(u, spiller.bosser)) {
       this.byttKart(u.kart);
       return;
     }
-    if (!u) return;
     this.stopp();
-    await this.beskjed.vis(`Porten til ${u.navn} er stengt. Her kommer et nytt eventyr senere!`);
+    const boss = u.kart && FIENDER.find((f) => f.id === u.krever);
+    if (boss) await this.beskjed.vis(`Porten til ${u.navn} er låst. Slå ${boss.navn} først!`);
+    else await this.beskjed.vis(`Porten til ${u.navn} er stengt. Her kommer et nytt eventyr senere!`);
     this.slipp();
   }
 
@@ -218,7 +221,8 @@ export default class Verden extends Phaser.Scene {
         .sprite(p.x, p.y, 'dungeon')
         .setOrigin(0.5, 1)
         .setDepth(DYBDE.helt - 1)
-        .play(`${type.figur}_idle`);
+        .play(`${type.figur}_idle`)
+        .setTint(type.farge ?? 0xffffff);
       this.fiender.push({ ...lagFiende(type, this.fiendeNivaa()), x: m.x, y: m.y, bilde });
     }
   }
@@ -579,9 +583,13 @@ export default class Verden extends Phaser.Scene {
     this.status.vis(spiller);
     for (const t of boss.etter) await this.beskjed.vis(t);
     spiller.seire++;
+    const ny = !spiller.bosser.includes(boss.id);
+    if (ny) spiller.bosser.push(boss.id);
     lagre();
     spill(this, 'nivaa');
     await this.heltekort.vis(this, spiller, 'Vis fram heltekortet ditt!');
+    const port = ny && portEtter(boss.id);
+    if (port) await this.beskjed.vis(`Porten til ${port.navn} har åpnet seg!`);
     await this.beskjed.vis(NYTT_EVENTYR);
     spiller.slaatt = [];
     spiller.aapnet = [];

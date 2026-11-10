@@ -53,10 +53,32 @@ test('alle tegn i kartene er kjent, og utgangene går til et kart med vei tilbak
   assert.ok(!fiendeFor(KISTE) && !fiendeFor(DRIKK));
 });
 
-test('eventyret har én boss, nok kister til alt utstyret og fiender som blir sterkere', () => {
+test('hvert område har én boss, bossen åpner neste port, og nivået stiger', () => {
   const alle = lest.flatMap(({ kart }) => kart.merker);
-  const bosser = alle.filter((m) => fiendeFor(m.tegn)?.boss);
-  assert.equal(bosser.length, 1);
+  const bosser = alle.map((m) => fiendeFor(m.tegn)).filter((t) => t?.boss);
+  assert.equal(new Set(bosser.map((b) => b.id)).size, bosser.length, 'en boss står to steder');
+  const porter = Object.values(lestFor('verden').data.innganger).filter((u) => u.kart);
+  assert.equal(bosser.length, porter.length);
+  assert.equal(porter.filter((u) => !u.krever).length, 1);
+  assert.equal(new Set(porter.map((u) => u.krever).filter(Boolean)).size, porter.length - 1);
+  // Kartene bak en port: kartet i porten og trappene videre ned.
+  const omraade = (id) => {
+    const ut = [];
+    for (let k = kartFor(id); k; k = kartFor(k.ned)) ut.push(k);
+    return ut;
+  };
+  const harBoss = (k, id) => lestFor(k.id).kart.merker.some((m) => fiendeFor(m.tegn)?.id === id);
+  const hjem = (id) => porter.find((u) => omraade(u.kart).some((k) => harBoss(k, id)));
+  for (const u of porter.filter((p) => p.krever)) {
+    const forrige = hjem(u.krever);
+    assert.ok(forrige, `${u.navn}: bossen ${u.krever} står ikke bak noen port`);
+    const for_ = Math.max(...omraade(forrige.kart).map((k) => k.nivaa));
+    assert.ok(Math.min(...omraade(u.kart).map((k) => k.nivaa)) > for_, `${u.navn}: nivået stiger ikke`);
+  }
+});
+
+test('nok kister til alt utstyret og fiender som blir sterkere', () => {
+  const alle = lest.flatMap(({ kart }) => kart.merker);
   assert.ok(alle.filter((m) => m.tegn === KISTE).length >= KISTEUTSTYR.length);
   const snitt = ({ kart }) => {
     const f = kart.merker.map((m) => fiendeFor(m.tegn)).filter((t) => t && !t.boss);

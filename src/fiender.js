@@ -5,8 +5,14 @@ import ork from './data/fiender/ork.js';
 import maskeork from './data/fiender/maskeork.js';
 import sjaman from './data/fiender/sjaman.js';
 import tallslukeren from './data/fiender/tallslukeren.js';
+import tusse from './data/fiender/tusse.js';
+import skogogle from './data/fiender/skogogle.js';
+import halvdan from './data/fiender/halvdan.js';
 
-export const FIENDER = [goblin, imp, skjelett, ork, maskeork, sjaman, tallslukeren];
+export const FIENDER = [
+  goblin, imp, skjelett, ork, maskeork, sjaman, tallslukeren,
+  tusse, skogogle, halvdan, // Skogen
+];
 
 // Bokstaven i tekstkartet → fienden.
 export const fiendeFor = (tegn) => FIENDER.find((f) => f.tegn === tegn);

@@ -86,7 +86,7 @@ Læreren trenger ikke godkjenne hver bøtte. Bygg bøttene etter planen, test se
 
 Bøtte 12 bygges i `C:/mattespill-b12` på grenen `botte-12-omrader`, der bøtte 9 er flettet inn i bøtte 11. Når bøtta er ferdig, flettes grenen inn i `main`. Portene 2–5 på verdenskartet (Skogen, Sumpen, Ishula, Lavagrotta) er stengt og venter på hvert sitt område. Ta ett område om gangen og commit etter hvert.
 
-1. Kart: hvert område er 1–2 hulekart (40×17) med `opp` tilbake til verden og `nivaa` som stiger (Skogen 2, Sumpen 4, Ishula 6, Lavagrotta 8). Gi porten i `innganger` i `verden.js` et `kart`. Hvert område får sin farge ved å tone hulen (f.eks. `setTint`), ikke med nye flispakker.
+1. Kart: hvert område er 1–2 hulekart (40×17) med `opp` tilbake til verden og `nivaa` som stiger (Skogen 4, Sumpen 6, Ishula 8, Lavagrotta 10, siden Dypet er 3). Gi porten i `innganger` i `verden.js` et `kart`. Hvert område får sin farge ved å tone hulen (f.eks. `setTint`), ikke med nye flispakker.
 2. Fiender: 2–3 nye per område, med figurer fra atlaset som ikke er brukt ennå (`wogol`, `tiny_zombie`, `big_zombie`, `chort`, `ogre`, `lizard_m`, `elf_m`, `angel`, `doc`) eller kjente figurer med en annen farge. Svakhetene skal passe stedet (is-fiender tåler is og er svake for ild, lava omvendt). Én boss per område med `foer`, `igjen` og `etter`.
 3. Portene åpnes én om gangen: neste port åpnes når forrige boss er slått (Tallslukeren åpner Skogen). Slåtte bosser lagres i `spiller.bosser`. En stengt port sier hva som skal til. Avgjør om «nytt eventyr» (alt kommer tilbake) skal skje etter hver boss eller bare etter den siste.
 4. Musikk per område (Ninja Adventure på GitHub, se `KILDER.md`).

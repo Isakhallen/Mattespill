@@ -34,7 +34,7 @@ export default class Kamp extends Phaser.Scene {
     const figur = (x, navn) =>
       this.add.sprite(x, BAKKE, 'dungeon').setOrigin(0.5, 1).setScale(S).play(`${navn}_idle`);
     this.helt = figur(112, d.spiller.figur);
-    this.fiende = figur(208, d.fiende.type.figur).setFlipX(true);
+    this.fiende = figur(208, d.fiende.type.figur).setFlipX(true).setTint(d.fiende.type.farge ?? 0xffffff);
     if (!this.textures.exists('gnist')) {
       const g = this.make.graphics({}, false);
       g.fillStyle(0xffffff).fillRect(0, 0, 2, 2).generateTexture('gnist', 2, 2).destroy();

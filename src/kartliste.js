@@ -1,11 +1,12 @@
 import verden from './data/kart/verden.js';
 import kjelleren from './data/kart/kjelleren.js';
 import dypet from './data/kart/dypet.js';
+import skogen from './data/kart/skogen.js';
 import { lesKart } from './kart.js';
 import { STENGT } from './data/ute.js';
 
 // Alle kartene. Eventyret starter i det første.
-export const KART = [verden, kjelleren, dypet];
+export const KART = [verden, kjelleren, dypet, skogen];
 export const FORSTE = verden.id;
 export const kartFor = (id) => KART.find((k) => k.id === id) ?? null;
 
@@ -26,3 +27,10 @@ export function utgang(data, tegn) {
 export function inngangFra(data, kart, fra) {
   return kart.merker.find((m) => UTGANG.test(m.tegn) && utgang(data, m.tegn)?.kart === fra) ?? null;
 }
+
+// En port er åpen når den har et kart og bossen i «krever» er slått («bosser» er id-ene).
+export const portAapen = (u, bosser = []) => !!u?.kart && (!u.krever || bosser.includes(u.krever));
+
+// Porten på verdenskartet som åpner seg når bossen «bossId» er slått.
+export const portEtter = (bossId) =>
+  Object.values(kartFor(FORSTE).innganger ?? {}).find((u) => u.krever === bossId) ?? null;
