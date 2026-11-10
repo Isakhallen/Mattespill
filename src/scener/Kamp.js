@@ -1,5 +1,5 @@
 import { gulvnavn } from '../tegnKart.js';
-import { angrepFor, motFiende, vistSkade, virkning, hvilEtter, nyKamp, runde, teller, PAA_HELT } from '../kamp.js';
+import { angrepFor, tingFor, motFiende, vistSkade, virkning, hvilEtter, nyKamp, runde, teller, PAA_HELT } from '../kamp.js';
 import { verdi } from '../angrepsbok.js';
 import { lagMerker, merkeFor } from '../merker.js';
 import { nivaa, maksLiv, skadeBonus } from '../vekst.js';
@@ -69,14 +69,28 @@ export default class Kamp extends Phaser.Scene {
         const under = hviler[a.id] ? `Hviler ${hviler[a.id]}` : full ? 'Fullt liv' : verdi({ ...a, skade: vistSkade(a, type) });
         return { navn: a.navn, under, merke: merkeFor(a), av: !!hviler[a.id] || full };
       });
-      const angrep = liste[await visning.velg(valg)];
-      const oppgave = lagOppgave(angrep.oppgavetrinn, Math.random, forrige);
-      forrige = oppgave.tekst;
-      const rett = (await oppgaverute.spor(oppgave, { topp: angrep.navn })) === 'rett';
-      oppgaverute.skjul();
-      if (rett) rette++;
-      if (teller(angrep.oppgavetrinn, trinn, rett)) {
-        spiller.tilpasning = oppdater(spiller.tilpasning, rett, MAKS_TRINN);
+      const ting = tingFor(spiller, bonus, maks);
+      const i = await visning.velg(valg, ting.length ? 'Ting' : null);
+      let angrep;
+      let rett = true; // ting virker alltid
+      if (i < 0) {
+        // En drikk eller bombe: ingen oppgave, men fienden slår.
+        angrep = await this.velgTing(visning, ting, k.heltLiv >= maks);
+        if (!angrep) {
+          visning.si('Velg angrep.');
+          continue;
+        }
+        spiller.ting[angrep.id]--;
+      } else {
+        angrep = liste[i];
+        const oppgave = lagOppgave(angrep.oppgavetrinn, Math.random, forrige);
+        forrige = oppgave.tekst;
+        rett = (await oppgaverute.spor(oppgave, { topp: angrep.navn })) === 'rett';
+        oppgaverute.skjul();
+        if (rett) rette++;
+        if (teller(angrep.oppgavetrinn, trinn, rett)) {
+          spiller.tilpasning = oppdater(spiller.tilpasning, rett, MAKS_TRINN);
+        }
       }
       k = runde(k, motFiende(angrep, type), rett);
       hviler = hvilEtter(hviler, angrep, rett);
@@ -128,6 +142,17 @@ export default class Kamp extends Phaser.Scene {
     visning.skjul();
     this.scene.stop();
     ferdig();
+  }
+
+  // Knappene for tingene og Tilbake. Gir tingen eller null.
+  async velgTing(visning, ting, fullt) {
+    visning.si('Velg en ting.');
+    const valg = ting.map((t) => ({
+      navn: t.navn,
+      under: `${t.heler ? 'Fullt liv' : `${t.skade} skade`} · ×${t.antall}`,
+      av: t.heler && fullt,
+    }));
+    return ting[await visning.velg([...valg, { navn: 'Tilbake' }])] ?? null;
   }
 
   pause(ms) {
@@ -199,15 +224,17 @@ export default class Kamp extends Phaser.Scene {
       this.tall(fiende, `−${skade}`, '#ffe08a');
       if (tungt) this.cameras.main.shake(180, angrep.type ? 0.006 : 0.012);
     };
-    if (!angrep.type) {
+    if (!angrep.type && !angrep.kast) {
       await this.slag(this.helt, fiende, true, () => {
         if (!effekt) spill(this, tungt ? 'tungt' : 'treff');
         treff();
       });
       return;
     }
-    spill(this, 'magi');
+    // Typeangrep og bomber flyr som en kule.
+    if (!angrep.kast) spill(this, 'magi');
     await this.trolldom(angrep.farge);
+    if (angrep.kast) spill(this, 'bombe');
     fiende.setTintFill(angrep.farge);
     treff();
     await this.pause(140);

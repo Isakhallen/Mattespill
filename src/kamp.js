@@ -14,6 +14,7 @@ import flammestot from './data/angrep/flammestot.js';
 import helliglys from './data/angrep/helliglys.js';
 import jordskjelv from './data/angrep/jordskjelv.js';
 import { STIGE, MAKS_TRINN } from './oppgaver.js';
+import { TING } from './varer.js';
 
 // Kampregler uten grafikk, så de kan testes med Node.
 // Rekkefølgen er rekkefølgen i angrepsboka og i kampen.
@@ -100,6 +101,15 @@ export function angrepFor(nivaa, trinn, bonus = 0, valgte = standardValg(nivaa))
   const liste = med(valgte).length ? med(valgte) : med(standardValg(nivaa));
   return liste.map((a) => medTall(a, trinn, bonus));
 }
+
+// Tingene eleven har med i kampen. De brukes uten oppgave og koster en tur.
+// Drikken gir fullt liv. Bomben skader med samme bonus som angrepene.
+export const tingFor = (s, bonus, heltMaks) =>
+  TING.filter((t) => s.ting[t.id] > 0).map((t) => ({
+    ...t,
+    skade: t.heler ? heltMaks : Math.round(t.skade * (1 + bonus / 10)),
+    antall: s.ting[t.id],
+  }));
 
 // Skal svaret telle i tilpasningen? Feil på en oppgave over elevens trinn
 // senker ikke eleven, og rett på en altfor lett oppgave løfter ikke.

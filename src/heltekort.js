@@ -13,6 +13,7 @@ export function kortet(s) {
       ['Ekstra skade', `+${skadeBonus(s)}`],
       ['Våpen', beste(s.utstyr, 'vaapen')?.navn ?? '–'],
       ['Rustning', beste(s.utstyr, 'rustning')?.navn ?? '–'],
+      ['Gull', s.gull],
       ['Angrep', opplaast(n).filter((a) => s.angrep.includes(a.id)).map((a) => a.navn).join(', ')],
     ],
     merke: s.seire ? `★ Slo Tallslukeren ${ganger}!` : 'Tallslukeren er ikke slått ennå.',

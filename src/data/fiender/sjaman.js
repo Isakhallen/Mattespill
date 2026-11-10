@@ -7,6 +7,7 @@ export default {
   liv: 40,
   skade: 6,
   erfaring: 10,
+  gull: 10,
   svak: ['slag', 'jord'],
   sterk: ['lyn', 'gift'],
 };

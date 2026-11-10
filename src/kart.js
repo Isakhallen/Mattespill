@@ -1,7 +1,7 @@
 // Gjør et tekstkart om til noe spillet kan spørre.
 // Tegn: # = vegg, . = gulv, @ = der helten starter. «stengt» er tegnene helten ikke
 // kan gå på (verdenskartet har flere, se src/data/ute.js).
-// Bokstaver er gulv med noe på, f.eks. en fiende (se src/fiender.js). < og > er trapper,
+// Bokstaver og $ er gulv med noe på, f.eks. en fiende (se src/fiender.js). < og > er trapper,
 // og sifrene er porter på verdenskartet.
 export function lesKart(linjer, stengt = '#') {
   const bredde = linjer[0].length;
@@ -13,7 +13,7 @@ export function lesKart(linjer, stengt = '#') {
     }
     [...linje].forEach((tegn, x) => {
       if (tegn === '@') start = { x, y };
-      else if (/[a-zæøå<>0-9]/i.test(tegn)) merker.push({ tegn, x, y });
+      else if (/[a-zæøå<>0-9$]/i.test(tegn)) merker.push({ tegn, x, y });
     });
   });
   if (!start) throw new Error('Kartet mangler @ (start)');

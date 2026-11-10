@@ -10,4 +10,4 @@
 
 `assets/dungeon.json` lages fra pakkens `tile_list` med `node verktoy/lag-atlas.mjs <mappa med pakken>`.
 
-Lydfilene har fått nye navn. Originalene: `treff` = `sfx_damage_hit3`, `tungt` = `sfx_sounds_impact5`, `magi` = `sfx_wpn_laser3`, `bom` = `sfx_sound_neutral1`, `au` = `sfx_sounds_damage1`, `seier` = `sfx_sounds_fanfare3`, `nivaa` = `sfx_sounds_fanfare1`, `kiste` = `sfx_coin_double1`, `drikk` = `sfx_sounds_powerup3`, `trapp` = `sfx_movement_stairs1a`, `svak` = `sfx_exp_short_hard8`, `preller` = `sfx_sounds_impact3`.
+Lydfilene har fått nye navn. Originalene: `treff` = `sfx_damage_hit3`, `tungt` = `sfx_sounds_impact5`, `magi` = `sfx_wpn_laser3`, `bom` = `sfx_sound_neutral1`, `au` = `sfx_sounds_damage1`, `seier` = `sfx_sounds_fanfare3`, `nivaa` = `sfx_sounds_fanfare1`, `kiste` = `sfx_coin_double1`, `drikk` = `sfx_sounds_powerup3`, `trapp` = `sfx_movement_stairs1a`, `svak` = `sfx_exp_short_hard8`, `preller` = `sfx_sounds_impact3`, `gull` = `sfx_coin_single1`, `bombe` = `sfx_exp_medium1`.

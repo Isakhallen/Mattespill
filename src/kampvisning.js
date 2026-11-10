@@ -16,12 +16,14 @@ export function lagKampvisning(spill) {
       ${side('helt')}${side('fiende')}
       <div class="melding"></div>
       <div class="valg"></div>
+      <button type="button" class="ting" hidden></button>
     </div>`;
   document.body.append(rot);
 
   const el = (velg) => rot.querySelector(velg);
   const flate = el('.flate');
   const valg = el('.valg');
+  const ting = el('.ting');
   let los = null;
 
   // Flata ligger nøyaktig oppå lerretet. --u er én spillpiksel.
@@ -32,13 +34,17 @@ export function lagKampvisning(spill) {
   };
   spill.scale.on('resize', plasser);
 
+  // i = -1 er Ting-knappen.
   const ferdig = (i) => {
-    if (!los || !valg.children[i] || valg.children[i].disabled) return;
+    if (!los) return;
+    if (i < 0 ? ting.hidden : !valg.children[i] || valg.children[i].disabled) return;
     const svar = los;
     los = null;
     valg.replaceChildren();
+    ting.hidden = true;
     svar(i);
   };
+  ting.addEventListener('click', () => ferdig(-1));
 
   valg.addEventListener('click', (e) => {
     const knapp = e.target.closest('button');
@@ -49,6 +55,7 @@ export function lagKampvisning(spill) {
     e.stopPropagation();
     const knapper = [...valg.children].filter((k) => !k.disabled);
     if (/^[1-9]$/.test(e.key)) ferdig(Number(e.key) - 1);
+    if (e.key === 't' || e.key === 'T') ferdig(-1);
     const d = { ArrowLeft: -1, ArrowRight: 1 }[e.key];
     if (d && knapper.length) {
       const i = knapper.indexOf(document.activeElement);
@@ -77,7 +84,10 @@ export function lagKampvisning(spill) {
     },
     // Viser knapper og gir nummeret på den eleven velger. valg: [{ navn, under, merke, av }]
     // «merke» er et lite bilde ved navnet, og «av» gir en grå knapp som ikke kan velges.
-    velg(liste) {
+    // Med «ekstra» (en tekst) vises Ting-knappen også. Den gir -1 (tast T).
+    velg(liste, ekstra = null) {
+      ting.textContent = ekstra ?? '';
+      ting.hidden = !ekstra;
       valg.replaceChildren(
         ...liste.map((v) => {
           const knapp = document.createElement('button');
@@ -107,6 +117,7 @@ export function lagKampvisning(spill) {
       rot.hidden = true;
       los = null;
       valg.replaceChildren();
+      ting.hidden = true;
     },
   };
   return vis;
