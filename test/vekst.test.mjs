@@ -124,9 +124,9 @@ test('spillet tåler at lagringen mangler, er ødelagt eller ikke er lov', () =>
 test('klassen, kartet og historien lagres, og rare verdier blir startverdier', () => {
   const ny = lagSpiller(null);
   assert.equal(ny.klasse, null);
-  assert.equal(ny.kart, 'kjelleren');
+  assert.equal(ny.kart, 'verden');
   const rar = lagSpiller({ klasse: 'drage', kart: 'månen', sett: [1, 'dypet'] });
-  assert.deepEqual([rar.klasse, rar.kart, rar.sett], [null, 'kjelleren', ['dypet']]);
+  assert.deepEqual([rar.klasse, rar.kart, rar.sett], [null, 'verden', ['dypet']]);
   const s = lagSpiller({});
   velgKlasse(s, 'trollmann');
   assert.deepEqual([s.navn, s.figur], ['Trollmann', 'wizzard_m']);

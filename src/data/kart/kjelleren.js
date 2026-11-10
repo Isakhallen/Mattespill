@@ -1,17 +1,18 @@
-// Første kart. # = vegg, . = gulv, @ = start, > = trapp ned.
+// Første hule. # = vegg, . = gulv, @ = start, < = opp til verden, > = trapp ned.
 // Fiender: g = goblin, i = imp, s = skjelett, o = ork. k = kiste, h = livsdrikk.
 // Rommene blir vanskeligere innover.
 export default {
   id: 'kjelleren', // brukes i lagringen
   navn: 'Kjelleren',
   nivaa: 1, // fiendene her er minst på dette nivået
+  opp: 'verden',
   ned: 'dypet',
   ruter: [
     '########################################',
     '#...........#.............#............#',
     '#...........#....g........#.........i..#',
-    '#..@.#......#...........i..............#',
-    '#....#............##......#.....s......#',
+    '#..<.#......#...........i..............#',
+    '#..@.#............##......#.....s......#',
     '#........g..#.....##......#............#',
     '#.k.........#........g....#..........h.#',
     '#...........#.............#............#',

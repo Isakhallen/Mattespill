@@ -1,13 +1,14 @@
-import { lesKart, vedSiden } from '../kart.js';
+import { vedSiden } from '../kart.js';
 import { finnVei } from '../vei.js';
 import { tegnKart, R, DYBDE } from '../tegnKart.js';
+import { tegnUte } from '../tegnUte.js';
 import { lagAnimasjoner, figurbilde } from '../figur.js';
 import { fiendeFor, fiendeNivaa, lagFiende, tilNivaa } from '../fiender.js';
 import { spiller, lagre, velgKlasse } from '../spiller.js';
 import { nivaa, maksLiv, kampErfaring, giErfaring, nesteUtstyr } from '../vekst.js';
 import { KISTE, KISTE_LUKKET, KISTE_AAPEN, DRIKK, DRIKK_BILDE } from '../utstyr.js';
 import { KLASSER } from '../klasser.js';
-import { kartFor, FORSTE, TRAPP } from '../kartliste.js';
+import { kartFor, FORSTE, lesKartData, UTGANG, utgang, inngangFra } from '../kartliste.js';
 import { slett } from '../lagring.js';
 import { lagOppgaverute } from '../oppgaverute.js';
 import { lagKampvisning } from '../kampvisning.js';
@@ -26,7 +27,7 @@ const START = [
   'Tallslukeren har stjålet alle tallene fra landsbyen!',
   'Nå vet ingen hva noe koster, og ingen kan telle til ti.',
 ];
-const ETTER_VALG = 'Tallslukeren bor dypt nede. Gå ned trappene og slå monstrene med matte!';
+const ETTER_VALG = 'Tallslukeren bor under bakken. Gå til porten øst for landsbyen!';
 const NYTT_EVENTYR = 'Du drar på et nytt eventyr med samme helt. Monstrene er tilbake!';
 
 export default class Verden extends Phaser.Scene {
@@ -36,21 +37,25 @@ export default class Verden extends Phaser.Scene {
 
   preload() {
     this.load.atlas('dungeon', 'assets/dungeon.png', 'assets/dungeon.json');
+    this.load.spritesheet('ute', 'assets/ute.png', { frameWidth: R, frameHeight: R });
     lastEffekter(this);
   }
 
-  // data: { kart, fra } der «fra» er trappen helten kommer ut av.
+  // data: { kart, fra } der «fra» er kartet helten kommer fra.
   create(data = {}) {
     this.kartData = kartFor(data.kart ?? spiller.kart) ?? kartFor(FORSTE);
     this.kartId = this.kartData.id;
-    this.kart = lesKart(this.kartData.ruter);
-    tegnKart(this, this.kart);
+    this.kart = lesKartData(this.kartData);
+    this.ute = this.kartData.stil === 'ute';
+    if (this.ute) tegnUte(this, this.kartData);
+    else tegnKart(this, this.kart);
     spiller.kart = this.kartId;
-    this.trapper = this.kart.merker.filter((m) => TRAPP[m.tegn]);
-    for (const m of this.trapper) {
+    this.utganger = this.kart.merker.filter((m) => UTGANG.test(m.tegn));
+    for (const m of this.utganger) {
+      if (!TRAPPBILDE[m.tegn]) continue; // portene er tegnet med kartet
       this.add.image(m.x * R, m.y * R, 'dungeon', TRAPPBILDE[m.tegn]).setOrigin(0).setDepth(1);
     }
-    const ut = this.trapper.find((m) => m.tegn === data.fra);
+    const ut = data.fra && inngangFra(this.kartData, this.kart, data.fra);
 
     lagAnimasjoner(this, spiller.figur);
     this.staar = `${spiller.figur}_idle`;
@@ -69,8 +74,9 @@ export default class Verden extends Phaser.Scene {
     this.settUtTing();
 
     const kamera = this.cameras.main;
-    // 4 piksler ekstra øverst så toppkanten på veggen synes.
-    kamera.setBounds(0, -4, this.kart.bredde * R, this.kart.hoyde * R + 4);
+    // I hulene 4 piksler ekstra øverst så toppkanten på veggen synes.
+    const ekstra = this.ute ? 0 : 4;
+    kamera.setBounds(0, -ekstra, this.kart.bredde * R, this.kart.hoyde * R + ekstra);
     kamera.startFollow(this.helt, true);
     kamera.fadeIn(TONING);
 
@@ -97,10 +103,10 @@ export default class Verden extends Phaser.Scene {
     this.input.on('pointerdown', (peker) => {
       if (this.opptatt) return;
       const til = { x: Math.floor(peker.worldX / R), y: Math.floor(peker.worldY / R) };
-      // Gå rundt fiender, ting og trapper, bortsett fra det eleven klikker på.
+      // Gå rundt fiender, ting og utganger, bortsett fra det eleven klikker på.
       const stengt = (x, y) =>
         this.kart.vegg(x, y) ||
-        ((this.fiendeI(x, y) || this.tingI(x, y) || this.trappI(x, y)) &&
+        ((this.fiendeI(x, y) || this.tingI(x, y) || this.utgangI(x, y)) &&
           !(x === til.x && y === til.y));
       this.vei = finnVei({ ...this.kart, vegg: stengt }, this.rute, til) ?? [];
     });
@@ -161,8 +167,9 @@ export default class Verden extends Phaser.Scene {
     this.slipp();
   }
 
-  // Tonet overgang til et annet kart. «fra» er trappen helten kommer ut av der.
-  byttKart(kart, fra) {
+  // Tonet overgang til et annet kart. Helten kommer ut ved utgangen tilbake hit.
+  byttKart(kart) {
+    const fra = this.kartId;
     this.stopp();
     spill(this, 'trapp');
     spiller.kart = kart;
@@ -171,10 +178,17 @@ export default class Verden extends Phaser.Scene {
     this.cameras.main.once('camerafadeoutcomplete', () => this.scene.restart({ kart, fra }));
   }
 
-  trapp(m) {
-    const t = TRAPP[m.tegn];
-    const til = this.kartData[t.til];
-    if (til) this.byttKart(til, t.motsatt);
+  // Trapp eller port. En port uten kart er stengt til et senere eventyr.
+  async gaaUt(m) {
+    const u = utgang(this.kartData, m.tegn);
+    if (u?.kart) {
+      this.byttKart(u.kart);
+      return;
+    }
+    if (!u) return;
+    this.stopp();
+    await this.beskjed.vis(`Porten til ${u.navn} er stengt. Her kommer et nytt eventyr senere!`);
+    this.slipp();
   }
 
   // Én fiende for hver bokstav i kartet, bortsett fra dem som er slått.
@@ -222,8 +236,8 @@ export default class Verden extends Phaser.Scene {
     return this.ting.find((t) => t.x === x && t.y === y);
   }
 
-  trappI(x, y) {
-    return this.trapper.find((m) => m.x === x && m.y === y);
+  utgangI(x, y) {
+    return this.utganger.find((m) => m.x === x && m.y === y);
   }
 
   // Stopper helten mens noe vises oppå kartet.
@@ -404,9 +418,9 @@ export default class Verden extends Phaser.Scene {
       else this.aapneKiste(ting);
       return false;
     }
-    const trapp = this.trappI(x, y);
-    if (trapp) {
-      this.trapp(trapp);
+    const ut = this.utgangI(x, y);
+    if (ut) {
+      this.gaaUt(ut);
       return false;
     }
     this.rute = { x, y };

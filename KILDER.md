@@ -5,7 +5,8 @@
 | Phaser 3.90.0 | <https://phaser.io> (hentet fra <https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js>) | MIT | `vendor/phaser.min.js` |
 | 0x72 DungeonTileset II v1.7 | <https://0x72.itch.io/dungeontileset-ii> | CC0 | `assets/dungeon.png`, `assets/dungeon.json` |
 | The Essential Retro Video Game Sound Effects Collection [512 sounds], Juhani Junkala | <https://opengameart.org/content/512-sound-effects-8-bit-style> | CC0 | `assets/lyd/*.wav` |
-| Ninja Adventure Asset Pack, Pixel-boy og AAA (musikken `theme_lost_village` og `theme_swamp`) | <https://pixel-boy.itch.io/ninja-adventure-asset-pack> (filene hentet fra <https://github.com/pixel-boy/NinjaAdventure/tree/main/audio/music>) | CC0 | `assets/lyd/kjelleren.ogg`, `assets/lyd/dypet.ogg` |
+| Tiny Town 1.1, Kenney | <https://opengameart.org/content/tiny-town> (fra <https://kenney.nl>) | CC0 | `assets/ute.png` |
+| Ninja Adventure Asset Pack, Pixel-boy og AAA (musikken `theme_lost_village`, `theme_swamp` og `theme_plain`) | <https://pixel-boy.itch.io/ninja-adventure-asset-pack> (filene hentet fra <https://github.com/pixel-boy/NinjaAdventure/tree/main/audio/music>) | CC0 | `assets/lyd/kjelleren.ogg`, `assets/lyd/dypet.ogg`, `assets/lyd/verden.ogg` |
 
 `assets/dungeon.json` lages fra pakkens `tile_list` med `node verktoy/lag-atlas.mjs <mappa med pakken>`.
 
