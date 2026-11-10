@@ -13,7 +13,7 @@ const tekster = (x) => (Array.isArray(x) ? [...new Set(x.filter((t) => typeof t 
 // Lager spilleren fra det som er lagret. Det som mangler eller er rart, får startverdien.
 // «klasse» er null til eleven har valgt. «kart» er kartet helten står i.
 // «slaatt» og «aapnet» er fiender og ting på kartet, skrevet som «kart:x,y».
-// «sett» er historietekster eleven har sett.
+// «sett» er historietekster eleven har sett. «seire» er hvor mange ganger bossen er slått.
 export function lagSpiller(d) {
   if (!d || typeof d !== 'object') d = {};
   const klasse = klasseFor(d.klasse);
@@ -28,6 +28,7 @@ export function lagSpiller(d) {
     slaatt: tekster(d.slaatt),
     aapnet: tekster(d.aapnet),
     sett: tekster(d.sett),
+    seire: heltall(d.seire, 0, 1e6) ? d.seire : 0,
   };
   s.liv = heltall(d.liv, 1, maksLiv(s)) ? d.liv : maksLiv(s);
   return s;
@@ -50,6 +51,7 @@ export const tilLagring = (s) => ({
   slaatt: s.slaatt,
   aapnet: s.aapnet,
   sett: s.sett,
+  seire: s.seire,
 });
 
 // Det som følger eleven gjennom spillet.

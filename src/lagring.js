@@ -33,3 +33,22 @@ export function skriv(data, lager) {
     return false;
   }
 }
+
+// Lyd på eller av lagres for seg, så «Ny helt» ikke skrur lyden på igjen.
+const LYD = 'mattespill-lyd';
+
+export function lesLyd(lager) {
+  try {
+    return (lager ?? globalThis.localStorage).getItem(LYD) !== 'av';
+  } catch {
+    return true;
+  }
+}
+
+export function skrivLyd(paa, lager) {
+  try {
+    (lager ?? globalThis.localStorage).setItem(LYD, paa ? 'paa' : 'av');
+  } catch {
+    // lyden virker likevel, men valget huskes ikke
+  }
+}

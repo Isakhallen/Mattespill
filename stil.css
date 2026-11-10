@@ -80,8 +80,35 @@ body:has(#kamp:not([hidden])) :is(#hint, #status) { display: none; }
 #beskjed .valg { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; }
 #beskjed .valg small { display: block; margin-top: 4px; font-size: 14px; }
 #beskjed .figurbilde { display: block; margin: 4px auto 8px; image-rendering: pixelated; background-repeat: no-repeat; }
-#status .nyhelt {
+#status button {
   padding: 2px 10px; font: inherit; font-size: 13px; color: #a99fb0;
   background: none; border: 2px solid #6b5f73; cursor: pointer;
 }
-#status .nyhelt:hover { color: #f1e9dc; }
+#status button:hover { color: #f1e9dc; }
+
+/* Heltekortet. */
+#kort {
+  position: fixed; inset: 0; z-index: 2;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(10, 8, 12, 0.6);
+}
+#kort[hidden] { display: none; }
+#kort .rute {
+  width: min(380px, 90vw); padding: 14px 26px 16px; text-align: center;
+  background: #2a2330; border: 4px solid #e8c170;
+  box-shadow: 0 0 0 4px #1c1820, 0 0 36px rgba(232, 193, 112, 0.35), 0 12px 40px #000;
+}
+#kort .topp { min-height: 1.2em; font-size: 15px; color: #e8c170; }
+#kort .bilde { margin: 8px 0 4px; padding: 10px 0; background: #1c1820; }
+#kort .figurbilde { display: block; margin: 0 auto; image-rendering: pixelated; background-repeat: no-repeat; }
+#kort h2 { margin: 8px 0 10px; font-size: 24px; color: #e8c170; }
+#kort dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; margin: 0; text-align: left; font-size: 16px; }
+#kort dt { color: #a99fb0; }
+#kort dd { margin: 0; }
+#kort .merke { margin: 14px 0; font-size: 17px; color: #a99fb0; }
+#kort .merke.slaatt { color: #e8c170; font-weight: bold; }
+#kort button {
+  padding: 8px 28px; font: inherit; font-size: 20px;
+  color: #1c1820; background: #e8c170; border: 0; cursor: pointer;
+}
+#kort button:focus { outline: 3px solid #f1e9dc; }

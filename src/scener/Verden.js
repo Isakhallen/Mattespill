@@ -14,6 +14,8 @@ import { lagKampvisning } from '../kampvisning.js';
 import { lagStatus } from '../status.js';
 import { lagBeskjed } from '../beskjed.js';
 import { kjorOving } from '../oving.js';
+import { lastEffekter, spill, musikk, settLyd, lydPaa } from '../lyd.js';
+import { lagHeltekort } from '../heltekort.js';
 
 const STEGTID = 130; // ms per rute
 const TONING = 250; // ms når kartet byttes
@@ -34,6 +36,7 @@ export default class Verden extends Phaser.Scene {
 
   preload() {
     this.load.atlas('dungeon', 'assets/dungeon.png', 'assets/dungeon.json');
+    lastEffekter(this);
   }
 
   // data: { kart, fra } der «fra» er trappen helten kommer ut av.
@@ -75,12 +78,22 @@ export default class Verden extends Phaser.Scene {
     // HTML-delene lages bare første gang, ikke når kartet byttes.
     this.oppgaverute ??= lagOppgaverute();
     this.kampvisning ??= lagKampvisning(this.game);
-    this.status ??= lagStatus(() => this.nyHelt());
+    this.status ??= lagStatus(
+      {
+        kort: () => this.visKort(),
+        lyd: () => settLyd(this.game, !lydPaa()),
+        nyHelt: () => this.nyHelt(),
+      },
+      settLyd(this.game),
+    );
+    this.heltekort ??= lagHeltekort();
+    musikk(this, this.kartId);
     this.status.vis(spiller);
     this.beskjed ??= lagBeskjed();
     this.bossSlaatt = false;
     this.opptatt = false; // sant mens en oppgave, beskjed eller kamp vises
     this.input.keyboard.on('keydown-O', () => this.oving());
+    this.input.keyboard.on('keydown-H', () => this.visKort());
     this.input.on('pointerdown', (peker) => {
       if (this.opptatt) return;
       const til = { x: Math.floor(peker.worldX / R), y: Math.floor(peker.worldY / R) };
@@ -151,6 +164,7 @@ export default class Verden extends Phaser.Scene {
   // Tonet overgang til et annet kart. «fra» er trappen helten kommer ut av der.
   byttKart(kart, fra) {
     this.stopp();
+    spill(this, 'trapp');
     spiller.kart = kart;
     lagre();
     this.cameras.main.fadeOut(TONING);
@@ -220,6 +234,13 @@ export default class Verden extends Phaser.Scene {
     this.opptatt = false;
   }
 
+  async visKort() {
+    if (this.opptatt) return;
+    this.stopp();
+    await this.heltekort.vis(this, spiller);
+    this.slipp();
+  }
+
   async oving() {
     if (this.opptatt) return;
     this.stopp();
@@ -240,6 +261,7 @@ export default class Verden extends Phaser.Scene {
       const foer = maksLiv(spiller);
       spiller.utstyr.push(u.id);
       spiller.liv += maksLiv(spiller) - foer;
+      spill(this, 'kiste');
       tekst = `Du fant: ${u.navn}! ` + (u.slag === 'vaapen' ? `+${u.skade} skade.` : `+${u.liv} liv.`);
     }
     lagre();
@@ -256,6 +278,7 @@ export default class Verden extends Phaser.Scene {
       this.slipp();
       return;
     }
+    spill(this, 'drikk');
     spiller.liv = maksLiv(spiller);
     spiller.aapnet.push(d.nokkel);
     d.bilde.destroy();
@@ -285,7 +308,8 @@ export default class Verden extends Phaser.Scene {
     });
   }
 
-  // Etter kampen: erfaring, nivå, liv og lagring. Gir meldingene kampen skal vise.
+  // Etter kampen: erfaring, nivå, liv og lagring. Gir meldingene kampen skal vise,
+  // som { tekst, lyd }.
   oppgjor(fiende, k) {
     const seier = k.utfall === 'seier';
     const poeng = kampErfaring(fiende.type, k);
@@ -295,10 +319,12 @@ export default class Verden extends Phaser.Scene {
     fiende.liv = k.fiendeLiv; // fienden beholder skaden til neste forsøk
 
     const pluss = poeng ? ` +${poeng} erfaring.` : '';
-    const tekster = [seier ? `Du vant!${pluss}` : `Du er utslitt og må hvile.${pluss}`];
+    const tekster = [
+      seier ? { tekst: `Du vant!${pluss}`, lyd: 'seier' } : { tekst: `Du er utslitt og må hvile.${pluss}` },
+    ];
     if (e.til > e.fra) {
-      tekster.push(`Nivå ${e.til}! Du er blitt sterkere.`);
-      for (const a of e.nyeAngrep) tekster.push(`Nytt angrep: ${a.navn}!`);
+      tekster.push({ tekst: `Nivå ${e.til}! Du er blitt sterkere.`, lyd: 'nivaa' });
+      for (const a of e.nyeAngrep) tekster.push({ tekst: `Nytt angrep: ${a.navn}!`, lyd: 'magi' });
       spiller.liv = maksLiv(spiller);
     }
 
@@ -323,6 +349,10 @@ export default class Verden extends Phaser.Scene {
     this.bossSlaatt = false;
     this.status.vis(spiller);
     for (const t of boss.etter) await this.beskjed.vis(t);
+    spiller.seire++;
+    lagre();
+    spill(this, 'nivaa');
+    await this.heltekort.vis(this, spiller, 'Vis fram heltekortet ditt!');
     await this.beskjed.vis(NYTT_EVENTYR);
     spiller.slaatt = [];
     spiller.aapnet = [];
