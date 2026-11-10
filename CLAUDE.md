@@ -48,7 +48,7 @@ Læreren trenger ikke godkjenne hver bøtte. Bygg bøttene etter planen, test se
 - `src/tilpasning.js`: opp etter 2 rette på rad, ned etter 2 feil på rad. Trinnet ligger foreløpig bare i minnet.
 - `src/oppgaverute.js` viser en oppgave som HTML oppå spillet: `await rute.spor(oppgave, { topp, bunn, taster })` gir `'rett'` eller `'feil'`. `Verden.opptatt` stopper helten mens ruta er åpen.
 - Tast O starter øving (`src/oving.js`) med + og − for å bytte trinn. Det er en lærertast som kan fjernes når kampen er på plass.
-- Logikk testes med `node --test test/` (`package.json` har bare `"type": "module"`).
+- Logikk testes med `node --test` i repo-roten, uten mappe som argument (`package.json` har bare `"type": "module"`).
 - Test i skjult Edge: bruk ny `--user-data-dir` hver gang, ellers kommer gamle filer fra cache. Spill-løkka går nesten ikke med `--virtual-time-budget`. En midlertidig testside må kalle `spill.loop.stop()` og så `spill.step(tid, 16)` i en løkke med `await` på 16 ms mellom hvert bilde, og resultatet leses med `--dump-dom`.
 
 ## Plan for bøtte 3
