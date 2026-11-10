@@ -34,32 +34,39 @@ Læreren trenger ikke godkjenne hver bøtte. Bygg bøttene etter planen, test se
 
 1. **Gå rundt** (ferdig): helt som går rundt på et testkart.
 2. **Oppgavene** (ferdig): oppgavetyper, nivåstige og tilpasning. Tabellen med nivåene ligger i `NIVAAER.md`.
-3. **Kampen** (neste): fiender på kartet, turbasert kamp, lett og tungt angrep. Publiseres på en lenke.
-4. **Helten vokser**: erfaringspoeng, nivåer, nye angrep, utstyr og lagring.
+3. **Kampen** (ferdig): fiender på kartet, turbasert kamp, lett og tungt angrep. Klar til å publiseres på GitHub Pages.
+4. **Helten vokser** (neste): erfaringspoeng, nivåer, nye angrep, utstyr og lagring.
 5. **Første eventyr**: område med flere fiender, boss, klassevalg og kort historie.
 6. **Finpuss**: lyd, effekter, heltekort og test med klassen.
 
-## Slik står det etter bøtte 2
+## Slik står det etter bøtte 3
 
 - Kjøres med `python -m http.server 8010` i repoet og <http://localhost:8010>.
-- `src/kart.js` leser tekstkart (`#` vegg, `.` gulv, `@` start), `src/vei.js` finner vei, `src/tegnKart.js` tegner flisene og `src/scener/Verden.js` styrer helten. Spillet ligger på `window.spill`.
-- Atlaset `assets/dungeon.png` + `.json` har alle 370 navn fra pakkens `tile_list`, for eksempel `knight_m_run_anim_f0`. Det lages på nytt med `node verktoy/lag-atlas.mjs kilder/0x72/0x72_DungeonTilesetII_v1.7`. Pakken ligger utpakket i `kilder/0x72/`, utenfor git.
+- `src/kart.js` leser tekstkart (`#` vegg, `.` gulv, `@` start, bokstaver = `merker`), `src/vei.js` finner vei, `src/tegnKart.js` tegner flisene og `src/scener/Verden.js` styrer helten og fiendene på kartet. Spillet ligger på `window.spill`.
+- Atlaset `assets/dungeon.png` + `.json` har alle 370 navn fra pakkens `tile_list`, for eksempel `knight_m_run_anim_f0`. Det lages på nytt med `node verktoy/lag-atlas.mjs kilder/0x72/0x72_DungeonTilesetII_v1.7`. Pakken ligger utpakket i `kilder/0x72/`, utenfor git. `src/figur.js` lager animasjonene `<figur>_idle` og `<figur>_run`.
 - Oppgavetypene ligger i `src/data/oppgaver/`, én fil per type. `src/oppgaver.js` setter dem sammen til stigen `STIGE` (12 trinn) og har `lagOppgave(trinn)`, `tolkSvar` og `erRett`. `NIVAAER.md` lages med `node verktoy/lag-nivaatabell.mjs`.
-- `src/tilpasning.js`: opp etter 2 rette på rad, ned etter 2 feil på rad. Trinnet ligger foreløpig bare i minnet.
-- `src/oppgaverute.js` viser en oppgave som HTML oppå spillet: `await rute.spor(oppgave, { topp, bunn, taster })` gir `'rett'` eller `'feil'`. `Verden.opptatt` stopper helten mens ruta er åpen.
-- Tast O starter øving (`src/oving.js`) med + og − for å bytte trinn. Det er en lærertast som kan fjernes når kampen er på plass.
+- `src/tilpasning.js`: opp etter 2 rette på rad, ned etter 2 feil på rad.
+- `src/spiller.js` har det som følger eleven: navn, figur, liv, `maksLiv` og `tilpasning` (trinnet). Ligger foreløpig bare i minnet. Startverdiene står i `src/data/helt.js`.
+- Fiender: `src/data/fiender/` (`tegn` er bokstaven i kartet, `figur`, `liv`, `skade`) og `src/fiender.js` med `fiendeFor(tegn)`. Goblin `g`, skjelett `s`, ork `o`.
+- Angrep: `src/data/angrep/` med `skade` og `trinn` (hvor oppgaven hentes, målt fra elevens trinn: lett −2, tungt 0).
+- `src/kamp.js` har reglene uten grafikk: `ANGREP`, `oppgavetrinn`, `nyKamp` og `runde(k, angrep, rett)`.
+- `src/scener/Kamp.js` tegner arena og figurer og kjører rundene. `src/kampvisning.js` er HTML oppå lerretet (navn, liv, melding, knapper) med mål i spillpiksler (`--u`). Tastene 1 og 2 velger angrep.
+- Verden starter kampen når helten går inn i en fiende. Seier fjerner fienden. Tap: helten våkner ved start med fullt liv, og fienden beholder skaden. Når alle er slått, kommer de tilbake (foreløpig løsning til bøtte 5).
+- `src/oppgaverute.js` viser en oppgave som HTML oppå spillet: `await rute.spor(oppgave, { topp, bunn, taster })` gir `'rett'` eller `'feil'`. `Verden.opptatt` stopper helten mens oppgave eller kamp vises.
+- Tast O starter øving (`src/oving.js`) med + og − for å bytte trinn. Den er en skjult lærertast med eget trinn, uten hint på skjermen.
 - Logikk testes med `node --test` i repo-roten, uten mappe som argument (`package.json` har bare `"type": "module"`).
-- Test i skjult Edge: bruk ny `--user-data-dir` hver gang, ellers kommer gamle filer fra cache. Spill-løkka går nesten ikke med `--virtual-time-budget`. En midlertidig testside må kalle `spill.loop.stop()` og så `spill.step(tid, 16)` i en løkke med `await` på 16 ms mellom hvert bilde, og resultatet leses med `--dump-dom`.
+- Test i skjult Edge: bruk ny `--user-data-dir` hver gang, ellers kommer gamle filer fra cache. Spill-løkka går nesten ikke med `--virtual-time-budget`. En midlertidig testside må vente til `spill.isRunning` er sann, kalle `spill.loop.stop()` og så `spill.step(tid, 16)` i en løkke med `await` på 16 ms mellom hvert bilde. Resultatet leses med `--dump-dom`. HTML-knapper trykkes med `.click()`, og svar sendes med `form.requestSubmit()`. Slett testsiden etterpå.
 
-## Plan for bøtte 3
+## Plan for bøtte 4
 
-1. Fiender som data i `src/data/fiender/`: navn, figur i atlaset, liv og skade. De settes på kartet med egne bokstaver i tekstkartet.
-2. Kampen starter når helten går inn i en fiende. Kampvisning oppå kartet: helt og fiende, livslinjer og to valg, lett og tungt angrep. Turbasert.
-3. Angrep som data i `src/data/angrep/`: navn, skade og hvor på stigen oppgaven hentes. Lett angrep gir en oppgave et par trinn under elevens trinn, tungt angrep gir elevens eget trinn og mer skade. Riktig svar treffer, feil svar bommer. Oppgavetypen følger av trinnet. I bøtte 4 kan nye angrep bindes til bestemte oppgavetyper.
-4. Fiendens tur gir litt skade uten oppgave. Ingen «game over»: går helten tom for liv, våkner den ved start med fullt liv.
-5. Hvert svar oppdaterer elevens trinn med `src/tilpasning.js`. Trinnet vises ikke for eleven i kamp.
-6. Publisering på GitHub Pages. Læreren lager repoet i nettleseren (`gh` mangler). Gi kommandoene for `git remote add` og `git push`, og si hvor Pages slås på.
-7. Kampreglene testes med Node, og flyten i skjult Edge.
+Dette er et forslag. Læreren kan endre det før bøtta starter.
+
+1. Lagring i `src/lagring.js`: spilleren (liv, erfaring, nivå, trinn, utstyr) og slåtte fiender i localStorage, med versjonsnummer. Spillet skal tåle at lagringen mangler eller er ødelagt.
+2. Erfaringspoeng: hver fiende gir poeng (nytt felt i fiendedata). Nytt nivå gir mer liv, litt mer skade og fullt liv. Vises etter kampen.
+3. Statuslinje på kartet: liv, nivå og erfaring.
+4. Nye angrep låses opp på bestemte nivåer og bindes til oppgavetyper (`type` i angrepsdata). Oppgaven hentes fra det trinnet i typen som ligger nærmest elevens trinn. Kampen viser opptil fire angrep.
+5. Utstyr som data i `src/data/utstyr/` (våpen gir skade, rustning gir liv). Kister på kartet med egen bokstav. Det beste utstyret tas i bruk av seg selv.
+6. Reglene for erfaring, nivå og lagring testes med Node, og flyten i skjult Edge.
 
 Lyd, musikk og effekter kan senere hentes fra Ninja Adventure, <https://github.com/pixel-boy/NinjaAdventure> (CC0).
 

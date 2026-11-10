@@ -1,4 +1,5 @@
 import Verden from './scener/Verden.js';
+import Kamp from './scener/Kamp.js';
 
 // Ligger på window så spillet kan sjekkes fra konsollen og i tester.
 window.spill = new Phaser.Game({
@@ -9,5 +10,5 @@ window.spill = new Phaser.Game({
   pixelArt: true,
   backgroundColor: '#111111',
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
-  scene: [Verden],
+  scene: [Verden, Kamp],
 });

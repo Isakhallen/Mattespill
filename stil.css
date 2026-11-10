@@ -3,8 +3,39 @@ body { font-family: "Trebuchet MS", "Segoe UI", sans-serif; color: #f1e9dc; }
 #spill { width: 100%; height: 100%; }
 #hint { position: fixed; left: 12px; bottom: 10px; font-size: 14px; color: #a99fb0; }
 
+/* Kampbildet. Målene er i spillpiksler: --u settes av src/kampvisning.js. */
+#kamp { position: fixed; inset: 0; }
+#kamp[hidden] { display: none; }
+#kamp .flate { position: absolute; --u: 4px; font-size: calc(8 * var(--u)); }
+#kamp .side {
+  position: absolute; top: 3%; width: 28%;
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline;
+}
+#kamp .helt { left: 21%; }
+#kamp .fiende { left: 51%; }
+#kamp .tall { font-size: 0.8em; color: #a99fb0; }
+#kamp .liv {
+  width: 100%; height: calc(5 * var(--u)); margin-top: var(--u);
+  background: #1c1820; border: var(--u) solid #6b5f73;
+}
+#kamp .liv i { display: block; height: 100%; background: #c0453a; transition: width 0.3s; }
+#kamp .helt .liv i { background: #6ab04c; }
+#kamp .melding { position: absolute; left: 0; right: 0; top: 74.5%; text-align: center; }
+#kamp .valg {
+  position: absolute; left: 0; right: 0; top: 82%;
+  display: flex; justify-content: center; gap: calc(8 * var(--u));
+}
+#kamp button {
+  width: calc(100 * var(--u)); padding: calc(3 * var(--u)) 0; font: inherit;
+  color: #f1e9dc; background: #2a2330; border: var(--u) solid #6b5f73; cursor: pointer;
+}
+#kamp button:focus { outline: none; border-color: #e8c170; }
+#kamp button small { display: block; font-size: 0.75em; color: #a99fb0; }
+
+body:has(#kamp:not([hidden])) #hint { display: none; }
+
 #oppgave {
-  position: fixed; inset: 0;
+  position: fixed; inset: 0; z-index: 2;
   display: flex; align-items: center; justify-content: center;
   background: rgba(10, 8, 12, 0.55);
 }

@@ -2,7 +2,7 @@
 export const R = 16; // piksler per rute
 export const DYBDE = { helt: 10, over: 20 };
 
-function gulvnavn(x, y) {
+export function gulvnavn(x, y) {
   const v = (((x * 73856093) ^ (y * 19349663)) >>> 0) % 28;
   return 'floor_' + (v < 7 ? v + 2 : 1); // mest floor_1, litt variasjon
 }
