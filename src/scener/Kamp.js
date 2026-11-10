@@ -1,5 +1,5 @@
 import { gulvnavn } from '../tegnKart.js';
-import { angrepFor, nyKamp, runde, teller } from '../kamp.js';
+import { angrepFor, skadeMot, nyKamp, runde, teller } from '../kamp.js';
 import { nivaa, maksLiv, skadeBonus } from '../vekst.js';
 import { lagOppgave, MAKS_TRINN } from '../oppgaver.js';
 import { oppdater } from '../tilpasning.js';
@@ -53,7 +53,7 @@ export default class Kamp extends Phaser.Scene {
     let forrige = null;
     while (!k.utfall) {
       const trinn = spiller.tilpasning.trinn;
-      const liste = angrepFor(n, trinn, bonus);
+      const liste = angrepFor(n, trinn, bonus).map((a) => ({ ...a, skade: skadeMot(a, type) }));
       const valg = liste.map((a) => ({ navn: a.navn, under: `${a.skade} skade` }));
       const angrep = liste[await visning.velg(valg)];
       const oppgave = lagOppgave(angrep.oppgavetrinn, Math.random, forrige);

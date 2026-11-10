@@ -7,8 +7,9 @@ import { UTSTYR } from '../src/utstyr.js';
 import {
   nivaa, grense, maksLiv, skadeBonus, kampErfaring, giErfaring, nesteUtstyr, beste,
 } from '../src/vekst.js';
-import { les, skriv, VERSJON } from '../src/lagring.js';
-import { lagSpiller, tilLagring } from '../src/spiller.js';
+import { les, skriv, slett, VERSJON } from '../src/lagring.js';
+import { lagSpiller, tilLagring, velgKlasse } from '../src/spiller.js';
+import { KLASSER } from '../src/klasser.js';
 import helt from '../src/data/helt.js';
 
 const lager = (start = {}) => {
@@ -118,4 +119,38 @@ test('spillet tåler at lagringen mangler, er ødelagt eller ikke er lov', () =>
   const rart = lagSpiller({ erfaring: -3, liv: 999, trinn: 'x', utstyr: ['finnes-ikke', 7], slaatt: 'a', aapnet: [null] });
   assert.deepEqual(tilLagring(rart), ny);
   assert.equal(lagSpiller({ liv: 0 }).liv, helt.maksLiv);
+});
+
+test('klassen, kartet og historien lagres, og rare verdier blir startverdier', () => {
+  const ny = lagSpiller(null);
+  assert.equal(ny.klasse, null);
+  assert.equal(ny.kart, 'kjelleren');
+  const rar = lagSpiller({ klasse: 'drage', kart: 'månen', sett: [1, 'dypet'] });
+  assert.deepEqual([rar.klasse, rar.kart, rar.sett], [null, 'kjelleren', ['dypet']]);
+  const s = lagSpiller({});
+  velgKlasse(s, 'trollmann');
+  assert.deepEqual([s.navn, s.figur], ['Trollmann', 'wizzard_m']);
+  assert.equal(s.liv, maksLiv(s));
+  s.kart = 'dypet';
+  const igjen = lagSpiller(tilLagring(s));
+  assert.deepEqual([igjen.klasse, igjen.kart, igjen.figur], ['trollmann', 'dypet', 'wizzard_m']);
+});
+
+test('klassene gir litt ulike startverdier', () => {
+  const verdi = (id) => {
+    const s = lagSpiller({});
+    velgKlasse(s, id);
+    return [maksLiv(s), skadeBonus(s)];
+  };
+  const [r, a, t] = KLASSER.map((k) => verdi(k.id));
+  assert.ok(r[0] > a[0] && a[0] > t[0]);
+  assert.ok(r[1] < a[1] && a[1] < t[1]);
+});
+
+test('slett glemmer helten', () => {
+  const l = lager();
+  l.removeItem = (k) => delete l.d[k];
+  skriv({ erfaring: 5 }, l);
+  slett(l);
+  assert.equal(les(l), null);
 });

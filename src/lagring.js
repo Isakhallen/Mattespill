@@ -14,6 +14,15 @@ export function les(lager) {
   }
 }
 
+// Glemmer helten (ny helt).
+export function slett(lager) {
+  try {
+    (lager ?? globalThis.localStorage).removeItem(NOKKEL);
+  } catch {
+    // ingenting å gjøre
+  }
+}
+
 // Gir false hvis det ikke gikk å lagre.
 export function skriv(data, lager) {
   try {

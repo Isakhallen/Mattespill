@@ -12,3 +12,7 @@ export const UTSTYR = [rustentSverd, laervest, sverd, ringbrynje, gullsverd, pla
 export const KISTE = 'k';
 export const KISTE_LUKKET = 'chest_full_open_anim_f0';
 export const KISTE_AAPEN = 'chest_empty_open_anim_f2';
+
+// Livsdrikk: gir fullt liv, én gang.
+export const DRIKK = 'h';
+export const DRIKK_BILDE = 'flask_big_red';

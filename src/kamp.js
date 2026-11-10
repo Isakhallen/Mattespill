@@ -25,6 +25,13 @@ export function oppgavetrinn(angrep, trinn) {
 // Skaden måles mot elevens trinn: samme trinn gir 6 (som tungt), to under gir 3 (som lett).
 export const skadeFor = (oppgtrinn, trinn) => klemt(Math.round(6 + 1.5 * (oppgtrinn - trinn)), 2, 9);
 
+// Skaden mot en fiende. En fiende med skjold tar bare 1 fra lette slag og 2 ekstra fra typeangrep.
+export function skadeMot(angrep, fiende) {
+  if (!fiende.skjold) return angrep.skade;
+  if (angrep.id === 'lett') return 1;
+  return angrep.type ? angrep.skade + 2 : angrep.skade;
+}
+
 // Typeangrep vises bare når oppgaven er høyst så mange trinn over eleven.
 export const MAKS_OVER = 2;
 

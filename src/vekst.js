@@ -1,6 +1,7 @@
 import helt from './data/helt.js';
 import { UTSTYR } from './utstyr.js';
 import { ANGREP } from './kamp.js';
+import { klasseFor } from './klasser.js';
 
 // Erfaring, nivå og utstyr. Regler uten grafikk, så de kan testes med Node.
 export const MAKS_NIVAA = 20;
@@ -25,10 +26,12 @@ export function beste(eier, slag) {
 
 export const maksLiv = (s) =>
   helt.maksLiv +
+  (klasseFor(s.klasse)?.liv ?? 0) +
   (nivaa(s.erfaring) - 1) * helt.perNivaa.liv +
   (beste(s.utstyr, 'rustning')?.liv ?? 0);
 
 export const skadeBonus = (s) =>
+  (klasseFor(s.klasse)?.skade ?? 0) +
   Math.floor((nivaa(s.erfaring) - 1) * helt.perNivaa.skade) +
   (beste(s.utstyr, 'vaapen')?.skade ?? 0);
 

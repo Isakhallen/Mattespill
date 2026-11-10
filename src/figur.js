@@ -15,3 +15,20 @@ export function lagAnimasjoner(scene, figur) {
     });
   }
 }
+
+// Et bilde i HTML av første rute i en figurs idle-animasjon, «skala» ganger større.
+export function figurbilde(scene, figur, skala = 3) {
+  const tekstur = scene.textures.get('dungeon');
+  const f = tekstur.get(`${figur}_idle_anim_f0`);
+  const kilde = tekstur.getSourceImage();
+  const el = document.createElement('span');
+  el.className = 'figurbilde';
+  Object.assign(el.style, {
+    width: `${f.cutWidth * skala}px`,
+    height: `${f.cutHeight * skala}px`,
+    backgroundImage: "url(assets/dungeon.png)",
+    backgroundPosition: `${-f.cutX * skala}px ${-f.cutY * skala}px`,
+    backgroundSize: `${kilde.width * skala}px ${kilde.height * skala}px`,
+  });
+  return el;
+}
