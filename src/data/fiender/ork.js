@@ -6,4 +6,5 @@ export default {
   figur: 'orc_warrior',
   liv: 18,
   skade: 3,
+  erfaring: 8,
 };

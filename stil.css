@@ -23,30 +23,45 @@ body { font-family: "Trebuchet MS", "Segoe UI", sans-serif; color: #f1e9dc; }
 #kamp .melding { position: absolute; left: 0; right: 0; top: 74.5%; text-align: center; }
 #kamp .valg {
   position: absolute; left: 0; right: 0; top: 82%;
-  display: flex; justify-content: center; gap: calc(8 * var(--u));
+  display: flex; justify-content: center; gap: calc(4 * var(--u));
 }
 #kamp button {
-  width: calc(100 * var(--u)); padding: calc(3 * var(--u)) 0; font: inherit;
+  width: calc(72 * var(--u)); padding: calc(3 * var(--u)) 0; font: inherit;
   color: #f1e9dc; background: #2a2330; border: var(--u) solid #6b5f73; cursor: pointer;
 }
 #kamp button:focus { outline: none; border-color: #e8c170; }
 #kamp button small { display: block; font-size: 0.75em; color: #a99fb0; }
 
-body:has(#kamp:not([hidden])) #hint { display: none; }
+body:has(#kamp:not([hidden])) :is(#hint, #status) { display: none; }
 
-#oppgave {
+/* Statuslinja på kartet. */
+#status {
+  position: fixed; left: 12px; top: 10px; display: flex; gap: 18px; align-items: center;
+  padding: 6px 12px; font-size: 15px; background: rgba(28, 24, 32, 0.85); border: 3px solid #6b5f73;
+}
+#status .nivaa { color: #e8c170; font-weight: bold; }
+#status b { font-weight: normal; color: #a99fb0; margin-right: 6px; }
+#status .maaler {
+  display: inline-block; width: 90px; height: 10px; vertical-align: middle;
+  background: #1c1820; border: 2px solid #6b5f73;
+}
+#status .maaler i { display: block; height: 100%; background: #6ab04c; transition: width 0.3s; }
+#status .xp .maaler i { background: #e8c170; }
+#status .tall { margin-left: 6px; font-size: 13px; color: #a99fb0; }
+
+:is(#oppgave, #beskjed) {
   position: fixed; inset: 0; z-index: 2;
   display: flex; align-items: center; justify-content: center;
   background: rgba(10, 8, 12, 0.55);
 }
-#oppgave[hidden] { display: none; }
-#oppgave .rute {
+:is(#oppgave, #beskjed)[hidden] { display: none; }
+:is(#oppgave, #beskjed) .rute {
   width: min(560px, 90vw); padding: 18px 28px 14px; text-align: center;
   background: #2a2330; border: 4px solid #6b5f73;
   box-shadow: 0 0 0 4px #1c1820, 0 12px 40px #000;
 }
 #oppgave .topp, #oppgave .bunn { min-height: 1.2em; font-size: 14px; color: #a99fb0; }
-#oppgave .tekst { margin: 14px 0 18px; font-size: 28px; line-height: 1.3; }
+:is(#oppgave, #beskjed) .tekst { margin: 14px 0 18px; font-size: 28px; line-height: 1.3; }
 #oppgave .svarlinje { display: flex; justify-content: center; align-items: baseline; gap: 10px; font-size: 26px; }
 #oppgave input {
   width: 5em; padding: 6px; font: inherit; text-align: center;
@@ -56,8 +71,8 @@ body:has(#kamp:not([hidden])) #hint { display: none; }
 #oppgave .melding { min-height: 3.4em; margin: 14px 0 6px; font-size: 18px; line-height: 1.4; white-space: pre-line; }
 #oppgave .melding.rett { font-size: 26px; color: #9bd17a; }
 #oppgave .melding.feil { color: #f0c987; }
-#oppgave button {
+:is(#oppgave, #beskjed) button {
   margin-bottom: 12px; padding: 8px 28px; font: inherit; font-size: 20px;
   color: #1c1820; background: #e8c170; border: 0; cursor: pointer;
 }
-#oppgave button:focus { outline: 3px solid #f1e9dc; }
+:is(#oppgave, #beskjed) button:focus { outline: 3px solid #f1e9dc; }

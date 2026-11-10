@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { ANGREP, nyKamp, oppgavetrinn, runde } from '../src/kamp.js';
 import { FIENDER, fiendeFor } from '../src/fiender.js';
+import { KISTE } from '../src/utstyr.js';
 import { lesKart } from '../src/kart.js';
 import { MAKS_TRINN } from '../src/oppgaver.js';
 import { nyTilstand, oppdater } from '../src/tilpasning.js';
@@ -74,11 +75,13 @@ test('fiendene har egne bokstaver og figurer som finnes i atlaset', () => {
   }
 });
 
-test('alle bokstaver i testkartet er fiender', () => {
+test('alle bokstaver i testkartet er fiender eller kister', () => {
   const kart = lesKart(testkart.ruter);
-  assert.ok(kart.merker.length >= 3);
+  assert.ok(kart.merker.filter((m) => fiendeFor(m.tegn)).length >= 3);
+  assert.ok(kart.merker.some((m) => m.tegn === KISTE));
+  assert.ok(!fiendeFor(KISTE));
   for (const m of kart.merker) {
-    assert.ok(fiendeFor(m.tegn), `ukjent tegn «${m.tegn}» i ${m.x},${m.y}`);
+    assert.ok(fiendeFor(m.tegn) || m.tegn === KISTE, `ukjent tegn «${m.tegn}» i ${m.x},${m.y}`);
     assert.notDeepEqual({ x: m.x, y: m.y }, kart.start);
   }
 });

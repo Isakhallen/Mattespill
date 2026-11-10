@@ -1,5 +1,6 @@
 import { gulvnavn } from '../tegnKart.js';
-import { ANGREP, nyKamp, oppgavetrinn, runde } from '../kamp.js';
+import { angrepFor, nyKamp, runde, teller } from '../kamp.js';
+import { nivaa, maksLiv, skadeBonus } from '../vekst.js';
 import { lagOppgave, MAKS_TRINN } from '../oppgaver.js';
 import { oppdater } from '../tilpasning.js';
 
@@ -9,7 +10,8 @@ const BAKKE = 118; // der føttene står
 const PAUSE = 550; // ms mellom heltens og fiendens tur
 
 // Kampen: turbasert, oppå kartet. Startes av Verden med
-// { spiller, fiende, visning, oppgaverute, ferdig }.
+// { spiller, fiende, visning, oppgaverute, oppgjor, ferdig }. «oppgjor(k)» oppdaterer
+// helten etter kampen og gir meldingene som skal vises før kampen lukkes.
 export default class Kamp extends Phaser.Scene {
   constructor() {
     super('Kamp');
@@ -33,11 +35,15 @@ export default class Kamp extends Phaser.Scene {
     this.kjor(d);
   }
 
-  async kjor({ spiller, fiende, visning, oppgaverute, ferdig }) {
+  async kjor({ spiller, fiende, visning, oppgaverute, oppgjor, ferdig }) {
     const type = fiende.type;
+    const maks = maksLiv(spiller);
+    const n = nivaa(spiller.erfaring);
+    const bonus = skadeBonus(spiller);
     let k = nyKamp(spiller.liv, fiende.liv, type.skade);
+    let rette = 0;
     const visLiv = () => {
-      visning.liv('helt', k.heltLiv, spiller.maksLiv);
+      visning.liv('helt', k.heltLiv, maks);
       visning.liv('fiende', k.fiendeLiv, type.liv);
     };
     visning.aapne(spiller.navn, type.navn);
@@ -46,14 +52,18 @@ export default class Kamp extends Phaser.Scene {
 
     let forrige = null;
     while (!k.utfall) {
-      const valg = ANGREP.map((a) => ({ navn: a.navn, under: `${a.skade} skade` }));
-      const angrep = ANGREP[await visning.velg(valg)];
-      const trinn = oppgavetrinn(angrep, spiller.tilpasning.trinn);
-      const oppgave = lagOppgave(trinn, Math.random, forrige);
+      const trinn = spiller.tilpasning.trinn;
+      const liste = angrepFor(n, trinn, bonus);
+      const valg = liste.map((a) => ({ navn: a.navn, under: `${a.skade} skade` }));
+      const angrep = liste[await visning.velg(valg)];
+      const oppgave = lagOppgave(angrep.oppgavetrinn, Math.random, forrige);
       forrige = oppgave.tekst;
       const rett = (await oppgaverute.spor(oppgave, { topp: angrep.navn })) === 'rett';
       oppgaverute.skjul();
-      spiller.tilpasning = oppdater(spiller.tilpasning, rett, MAKS_TRINN);
+      if (rett) rette++;
+      if (teller(angrep.oppgavetrinn, trinn, rett)) {
+        spiller.tilpasning = oppdater(spiller.tilpasning, rett, MAKS_TRINN);
+      }
       k = runde(k, angrep, rett);
 
       await this.slag(this.helt, this.fiende, rett);
@@ -70,10 +80,10 @@ export default class Kamp extends Phaser.Scene {
 
     const tapte = k.utfall === 'seier' ? this.fiende : this.helt;
     this.tweens.add({ targets: tapte, alpha: 0, duration: 300 });
-    await visning.vent(k.utfall === 'seier' ? 'Du vant!' : 'Du er utslitt og må hvile.');
+    for (const tekst of oppgjor({ ...k, rette })) await visning.vent(tekst);
     visning.skjul();
     this.scene.stop();
-    ferdig(k);
+    ferdig();
   }
 
   pause(ms) {

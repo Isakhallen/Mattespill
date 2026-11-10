@@ -6,4 +6,5 @@ export default {
   figur: 'skelet',
   liv: 12,
   skade: 2,
+  erfaring: 5,
 };

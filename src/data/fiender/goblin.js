@@ -7,4 +7,5 @@ export default {
   figur: 'goblin',
   liv: 6,
   skade: 1,
+  erfaring: 3,
 };
