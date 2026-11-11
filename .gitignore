@@ -1,2 +1,4 @@
 kilder/
 *.zip
+firebase-debug.log
+.firebase/

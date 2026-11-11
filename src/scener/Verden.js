@@ -197,9 +197,14 @@ export default class Verden extends Phaser.Scene {
 
   // Blir med i klassen på dette kartet (eller går ut hvis eleven spiller alene).
   async kobleTil() {
+    clearTimeout(this.igjen);
     this.visKlassen(true);
-    await this.nettverk.bliMed(nett.kode, this.kartId, this.minRad());
+    const ok = await this.nettverk.bliMed(nett.kode, this.kartId, this.minRad());
     this.visKlassen();
+    // Nettet på skolen kan svikte en stund. Prøv igjen litt senere.
+    if (!ok && nett.kode && this.nettverk.finnes) {
+      this.igjen = setTimeout(() => !this.nettverk.tilkoblet && nett.kode && this.kobleTil(), 10000);
+    }
   }
 
   visKlassen(kobler = false) {
@@ -268,8 +273,9 @@ export default class Verden extends Phaser.Scene {
       const y = lerret.top + (a.bilde.y - a.bilde.height * 0.75 - syn.y) * k; // figurene har luft over hodet
       a.lapp.style.transform = `translate(${x}px, ${y}px) translate(-50%, -100%)`;
     }
-    if (this.andre.size !== this.vistAntall) {
-      this.vistAntall = this.andre.size;
+    const vist = `${this.andre.size} ${this.nettverk.tilkoblet}`;
+    if (vist !== this.vist) {
+      this.vist = vist;
       this.visKlassen();
     }
   }

@@ -48,9 +48,10 @@ export function lagNettverk() {
       try {
         const { db, base, uid } = await last();
         if (denne !== gang) return false;
-        mitt = db.ref(base, `rom/${kode}/${kart}/${uid}`);
-        await db.onDisconnect(mitt).remove();
+        const min = db.ref(base, `rom/${kode}/${kart}/${uid}`);
+        await db.onDisconnect(min).remove();
         if (denne !== gang) return false;
+        mitt = min;
         send();
         const rom = db.ref(base, `rom/${kode}/${kart}`);
         const sett = (s) => s.key !== uid && radene.set(s.key, s.val());
@@ -58,6 +59,14 @@ export function lagNettverk() {
           db.onChildAdded(rom, sett),
           db.onChildChanged(rom, sett),
           db.onChildRemoved(rom, (s) => radene.delete(s.key)),
+          // Etter et brudd har Firebase slettet raden og glemt onDisconnect. Sett begge på nytt.
+          db.onValue(db.ref(base, '.info/connected'), (s) => {
+            nett.tilkoblet = s.val() === true;
+            if (!nett.tilkoblet || mitt !== min) return;
+            db.onDisconnect(min).remove().catch(() => {});
+            sendt = '';
+            send();
+          }),
         ];
         klokke = setInterval(send, MELLOM);
         nett.tilkoblet = true;
