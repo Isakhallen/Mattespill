@@ -26,4 +26,4 @@ export const MYNT = 'coin_anim';
 
 // Butikken: en handelsmann i landsbyen.
 export const BUTIKK = 'b';
-export const SELGER = 'elf_m';
+export const SELGER = 'elf_m'; // ikke dvergen, for Smeden Dag er en dverg

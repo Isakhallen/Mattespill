@@ -123,7 +123,8 @@ export default class Verden extends Phaser.Scene {
       // Gå rundt fiender, ting og utganger, bortsett fra det eleven klikker på.
       const stengt = (x, y) =>
         this.kart.vegg(x, y) ||
-        ((this.fiendeI(x, y) || this.tingI(x, y) || this.utgangI(x, y) || this.personI(x, y) || this.butikkI(x, y)) &&
+        ((this.fiendeI(x, y) || this.tingI(x, y) || this.utgangI(x, y) || this.personI(x, y) ||
+          this.butikkI(x, y)) &&
           !(x === til.x && y === til.y));
       this.vei = finnVei({ ...this.kart, vegg: stengt }, this.rute, til) ?? [];
     });
@@ -358,12 +359,12 @@ export default class Verden extends Phaser.Scene {
     await this.belonn({ erfaring: 2 });
   }
 
-  // Belønning fra folk: erfaring, og gull når spilleren har gull (bøtte 9).
+  // Belønning fra folk: erfaring og gull.
   async belonn({ erfaring = 0, gull = 0 }) {
     const e = giErfaring(spiller.erfaring, erfaring);
     spiller.erfaring = e.erfaring;
     let tekst = `+${erfaring} erfaring.`;
-    if (gull && typeof spiller.gull === 'number') {
+    if (gull) {
       spiller.gull += gull;
       tekst += ` +${gull} gull.`;
     }

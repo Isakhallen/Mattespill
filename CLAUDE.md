@@ -50,7 +50,7 @@ Læreren trenger ikke godkjenne hver bøtte. Bygg bøttene etter planen, test se
 ## Slik står det etter bøtte 12
 
 - Kjøres med `python -m http.server 8010` i repoet og <http://localhost:8010>.
-- `src/kart.js` leser tekstkart (`lesKart(linjer, stengt)`: `#` vegg, `.` gulv, `@` start, bokstaver, sifre og trappene `<` `>` = `merker`) og har `vedSiden` (der helten kommer ut av en trapp eller port), `src/vei.js` finner vei, `src/tegnKart.js` tegner flisene og `src/scener/Verden.js` styrer helten og fiendene på kartet. Spillet ligger på `window.spill`.
+- `src/kart.js` leser tekstkart (`lesKart(linjer, stengt)`: `#` vegg, `.` gulv, `@` start, bokstaver, sifre, `$` og trappene `<` `>` = `merker`) og har `vedSiden` (der helten kommer ut av en trapp eller port), `src/vei.js` finner vei, `src/tegnKart.js` tegner flisene og `src/scener/Verden.js` styrer helten og fiendene på kartet. Spillet ligger på `window.spill`.
 - Kart: `src/data/kart/` (`verden` 56×36, `kjelleren`, `dypet`, `skogen`, `sumpen`, `ishula` og `lavagrotta` 40×17) og `src/kartliste.js` (`KART`, `FORSTE` = `verden`, `kartFor`, `lesKartData`, `UTGANG`, `utgang`, `inngangFra`). `>` går til kartet i `ned`, `<` til kartet i `opp`, og sifrene er porter på verdenskartet (`innganger`: `{ navn, kart }`, uten `kart` er porten stengt og gir en beskjed). Kjelleren har `<` opp til verden. Helten kommer ut ved utgangen som fører tilbake dit den kom fra (`fra` er kart-id).
 - Verdenskartet har `stil: 'ute'` og tegnes av `src/tegnUte.js` i to RenderTextures (bakken, og tretopper/brønntak over helten). Tegnene og flisnumrene står i `src/data/ute.js` (`STENGT`, `FLIS`). Vei, skog og tak velger flis ut fra naboene. En port er `====` / `]()]` / `]11]`, mørket inni er rektangler bak bakken. Flisene er `assets/ute.png` (= `Tilemap/tilemap_packed.png` fra Tiny Town, utpakket i `kilder/tinytown/`). Kartet ble laget med et lite skript, men kan også skrives for hånd. `tekst` vises første gang eleven kommer til kartet. Byttet skjer med `scene.restart({ kart, fra })`, så HTML-delene lages bare én gang (`??=`).
 - Atlaset `assets/dungeon.png` + `.json` har alle 370 navn fra pakkens `tile_list`, for eksempel `knight_m_run_anim_f0`. Det lages på nytt med `node verktoy/lag-atlas.mjs kilder/0x72/0x72_DungeonTilesetII_v1.7`. Pakken ligger utpakket i `kilder/0x72/`, utenfor git. `src/figur.js` lager animasjonene `<figur>_idle` og `<figur>_run`.
@@ -85,7 +85,7 @@ Læreren trenger ikke godkjenne hver bøtte. Bygg bøttene etter planen, test se
 
 ## Plan videre
 
-Bøtte 12 ble bygd i `C:/mattespill-b12` på grenen `botte-12-omrader` (bøtte 8–12), og `main` er flyttet fram til den lokalt. Den er ikke sendt til GitHub ennå.
+Bøtte 12 ble bygd i `C:/mattespill-b12` på grenen `botte-12-omrader` (bøtte 8–12), og `main` (der en annen økt hadde flettet inn bøtte 9) er flettet inn i den. `main` er flyttet fram lokalt, men ikke sendt til GitHub ennå.
 
 1. Send `main` til GitHub (`git push origin main`) når læreren vil at nettsida skal oppdateres. Grenene `botte-8` til `botte-12` og mappene `C:/mattespill-b10`, `-b11` og `-b12` kan ryddes bort etterpå.
 2. Bøtte 13 (Online) starter ikke før læreren har avklart personvern med skolen.
