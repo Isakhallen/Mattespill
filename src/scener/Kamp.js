@@ -6,6 +6,7 @@ import { nivaa, maksLiv, skadeBonus } from '../vekst.js';
 import { lagOppgave, MAKS_TRINN } from '../oppgaver.js';
 import { oppdater } from '../tilpasning.js';
 import { spill } from '../lyd.js';
+import { folkFor } from '../folkeslag.js';
 
 const S = 2; // figurer og fliser tegnes dobbelt så store som på kartet
 const FLIS = 16 * S;
@@ -49,7 +50,9 @@ export default class Kamp extends Phaser.Scene {
     const maks = maksLiv(spiller);
     const n = nivaa(spiller.erfaring);
     const bonus = skadeBonus(spiller);
-    let k = nyKamp(spiller.liv, fiende.liv, fiende.skade, maks);
+    const folk = folkFor(spiller.folk);
+    let k = nyKamp(spiller.liv, fiende.liv, fiende.skade, maks, folk);
+    let heldig = !!folk?.heldig; // halvlingen får prøve igjen én gang i kampen
     let rette = 0;
     let hviler = {}; // angrep som hviler: { id: turer igjen }
     const visLiv = (helt = k.heltLiv, mot = k.fiendeLiv) => {
@@ -63,7 +66,7 @@ export default class Kamp extends Phaser.Scene {
     let forrige = null;
     while (!k.utfall) {
       const trinn = spiller.tilpasning.trinn;
-      const liste = angrepFor(n, trinn, bonus, spiller.angrep);
+      const liste = angrepFor(n, trinn, bonus, spiller.angrep, spiller);
       const valg = liste.map((a) => {
         const full = a.heler && k.heltLiv >= maks;
         const under = hviler[a.id] ? `Hviler ${hviler[a.id]}` : full ? 'Fullt liv' : verdi({ ...a, skade: vistSkade(a, type) });
@@ -86,21 +89,28 @@ export default class Kamp extends Phaser.Scene {
         const oppgave = lagOppgave(angrep.oppgavetrinn, Math.random, forrige);
         forrige = oppgave.tekst;
         rett = (await oppgaverute.spor(oppgave, { topp: angrep.navn })) === 'rett';
+        if (!rett && heldig) {
+          heldig = false;
+          const ny = lagOppgave(angrep.oppgavetrinn, Math.random, oppgave.tekst); // svaret på den første er vist
+          forrige = ny.tekst;
+          rett = (await oppgaverute.spor(ny, { topp: 'Heldig! Du får prøve igjen.' })) === 'rett';
+        }
         oppgaverute.skjul();
         if (rett) rette++;
         if (teller(angrep.oppgavetrinn, trinn, rett)) {
           spiller.tilpasning = oppdater(spiller.tilpasning, rett, MAKS_TRINN);
         }
       }
-      k = runde(k, motFiende(angrep, type), rett);
+      const mot = motFiende(angrep, type); // villmagi får elementet sitt her
+      k = runde(k, mot, rett);
       hviler = hvilEtter(hviler, angrep, rett);
 
       // Svakheten vises bare med et stort tall og en egen lyd. Skjold og det fienden tåler, gir et lite tall.
-      const v = type.skjold && angrep.id === 'lett' ? 0.5 : virkning(angrep, type);
+      const v = type.skjold && angrep.id === 'lett' ? 0.5 : virkning(mot, type);
       await this.heltSlaar(angrep, rett, k, v > 1 ? 'svak' : v < 1 ? 'preller' : null);
       this.visMerker(k.aktive);
       const liv = k.heling ? ` +${k.heling} liv.` : '';
-      const mitt = !rett ? 'Bom!' : angrep.selv ? (angrep.heler ? liv.trim() : 'Skjold!') : `Treff! −${k.traff}.${liv}`;
+      const mitt = !rett ? 'Bom!' : angrep.selv ? (angrep.heler ? liv.trim() : `${angrep.navn}!`) : `Treff! −${k.traff}.${liv}`;
       visning.si(mitt);
       let fiendeLiv = k.mellom.fiendeLiv;
       visLiv(k.mellom.heltLiv, fiendeLiv);
@@ -127,7 +137,7 @@ export default class Kamp extends Phaser.Scene {
           this.tall(this.helt, `−${k.slag}`, '#ff8a7a');
           if (type.boss) this.cameras.main.shake(200, 0.012);
         });
-        visning.si(`${mitt} ${type.bestemt} slår: −${k.slag}.`);
+        visning.si(`${mitt} ${type.bestemt} slår: −${k.slag}.${k.reddet ? ' Du gir ikke opp!' : ''}`);
       }
       visLiv();
       this.visMerker(Object.keys(k.merker));
@@ -224,7 +234,7 @@ export default class Kamp extends Phaser.Scene {
       this.tall(fiende, `−${skade}`, '#ffe08a');
       if (tungt) this.cameras.main.shake(180, angrep.type ? 0.006 : 0.012);
     };
-    if (!angrep.type && !angrep.kast) {
+    if (!angrep.type && !angrep.kast && !angrep.farge) {
       await this.slag(this.helt, fiende, true, () => {
         if (!effekt) spill(this, tungt ? 'tungt' : 'treff');
         treff();

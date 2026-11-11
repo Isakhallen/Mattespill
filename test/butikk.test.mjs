@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { VARER, TING, DRAKTER, MAKS_TING, vareFor } from '../src/varer.js';
+import { VARER, TING, DRAKTER, HODEPLAGG, MAKS_TING, vareFor } from '../src/varer.js';
 import { UTSTYR } from '../src/utstyr.js';
 import { hylle, kjop, selg, taPaa, rabatt, rabattPris, rabattOppgave, salgspris } from '../src/butikk.js';
 import { lagSpiller, tilLagring, velgKlasse } from '../src/spiller.js';
@@ -10,8 +10,8 @@ import { tingFor, nyKamp, runde, motFiende } from '../src/kamp.js';
 import { STIGE } from '../src/oppgaver.js';
 
 const helt = (d = {}) => {
-  const s = lagSpiller({ klasse: 'ridder', ...d });
-  velgKlasse(s, 'ridder');
+  const s = lagSpiller({ klasse: 'kriger', folk: 'menneske', ...d });
+  velgKlasse(s, 'kriger');
   return s;
 };
 
@@ -27,7 +27,7 @@ test('alle fiender gir gull, og gullet vokser med nivået', () => {
 });
 
 test('alle varer har en pris som går opp i 10, så rabatt og salg gir hele tall', () => {
-  assert.equal(VARER.length, UTSTYR.length + TING.length + DRAKTER.length);
+  assert.equal(VARER.length, UTSTYR.length + TING.length + DRAKTER.length + HODEPLAGG.length);
   for (const v of VARER) {
     assert.ok(v.pris > 0 && v.pris % 10 === 0, v.id);
     assert.ok(Number.isInteger(salgspris(v)), v.id);
@@ -66,6 +66,7 @@ test('kjøp trekker gull og gir varen, men bare når eleven har råd', () => {
 test('rustning og drakt endrer livet, og drakten bytter figur', () => {
   const s = helt({ gull: 1000 });
   const liv = maksLiv(s);
+  const figur = s.figur;
   kjop(s, 'laervest');
   assert.equal(maksLiv(s), liv + 6);
   assert.equal(s.liv, liv + 6);
@@ -76,7 +77,7 @@ test('rustning og drakt endrer livet, og drakten bytter figur', () => {
   assert.equal(skadeBonus(s), skade + 2);
   assert.equal(maksLiv(s), liv + 11);
   taPaa(s, null);
-  assert.equal(s.figur, 'knight_m');
+  assert.equal(s.figur, figur);
   assert.equal(s.liv, maksLiv(s));
   assert.equal(taPaa(s, 'dvergdrakt'), false, 'bare drakter eleven eier');
   taPaa(s, 'englekappe');
@@ -84,7 +85,7 @@ test('rustning og drakt endrer livet, og drakten bytter figur', () => {
   assert.ok(selg(s, 'englekappe'));
   assert.equal(s.gull, gull + 60);
   assert.equal(s.drakt, null);
-  assert.equal(s.figur, 'knight_m');
+  assert.equal(s.figur, figur);
   assert.equal(selg(s, 'englekappe'), false);
 });
 

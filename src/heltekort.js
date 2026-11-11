@@ -2,6 +2,7 @@ import { nivaa, maksLiv, skadeBonus, beste } from './vekst.js';
 import { opplaast } from './kamp.js';
 import { figurbilde } from './figur.js';
 import { FIENDER } from './fiender.js';
+import { folkFor } from './folkeslag.js';
 
 const BOSSER = FIENDER.filter((f) => f.boss);
 
@@ -11,12 +12,13 @@ export function kortet(s) {
   return {
     tittel: `${s.navn} · Nivå ${n}`,
     linjer: [
+      ['Folk', folkFor(s.folk)?.navn ?? '–'],
       ['Liv', maksLiv(s)],
       ['Ekstra skade', `+${skadeBonus(s)}`],
       ['Våpen', beste(s.utstyr, 'vaapen')?.navn ?? '–'],
       ['Rustning', beste(s.utstyr, 'rustning')?.navn ?? '–'],
       ['Gull', s.gull],
-      ['Angrep', opplaast(n).filter((a) => s.angrep.includes(a.id)).map((a) => a.navn).join(', ')],
+      ['Angrep', opplaast(n, s).filter((a) => s.angrep.includes(a.id)).map((a) => a.navn).join(', ')],
     ],
     merke: s.bosser.length
       ? `★ ${s.bosser.length} av ${BOSSER.length} bosser slått!`
@@ -31,16 +33,19 @@ export function lagHeltekort() {
   rot.hidden = true;
   rot.innerHTML = `<div class="rute">
     <div class="topp"></div><div class="bilde"></div><h2></h2>
-    <dl></dl><p class="merke"></p><button type="button">Lukk</button></div>`;
+    <dl></dl><p class="merke"></p>
+    <div class="knapper"><button type="button" class="endre">Endre helt</button><button type="button" class="lukk">Lukk</button></div></div>`;
   document.body.append(rot);
   const el = (velg) => rot.querySelector(velg);
   let los = null;
-  const lukk = () => {
+  // vis() gir 'endre' når eleven vil endre helten i heltelaget.
+  const lukk = (svar) => {
     rot.hidden = true;
-    los?.();
+    los?.(svar);
     los = null;
   };
-  el('button').addEventListener('click', lukk);
+  el('.lukk').addEventListener('click', () => lukk());
+  el('.endre').addEventListener('click', () => lukk('endre'));
   rot.addEventListener('keydown', (e) => {
     e.stopPropagation(); // tastene skal ikke nå spillet
     if (['Escape', 'h', 'H'].includes(e.key)) lukk();
@@ -66,7 +71,7 @@ export function lagHeltekort() {
       el('.merke').textContent = k.merke;
       el('.merke').classList.toggle('slaatt', s.bosser.length > 0);
       rot.hidden = false;
-      el('button').focus();
+      el('.lukk').focus();
       return new Promise((r) => {
         los = r;
       });

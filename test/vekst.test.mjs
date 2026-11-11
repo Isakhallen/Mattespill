@@ -140,22 +140,23 @@ test('klassen, kartet og historien lagres, og rare verdier blir startverdier', (
   assert.deepEqual([rar.klasse, rar.kart, rar.sett], [null, 'verden', ['dypet']]);
   const s = lagSpiller({});
   velgKlasse(s, 'trollmann');
-  assert.deepEqual([s.navn, s.figur], ['Trollmann', 'wizzard_m']);
+  assert.equal(s.navn, 'Trollmann');
+  assert.match(s.figur, /^h_[a-z]+$/);
   assert.equal(s.liv, maksLiv(s));
   s.kart = 'dypet';
   const igjen = lagSpiller(tilLagring(s));
-  assert.deepEqual([igjen.klasse, igjen.kart, igjen.figur], ['trollmann', 'dypet', 'wizzard_m']);
+  assert.deepEqual([igjen.klasse, igjen.kart, igjen.figur], ['trollmann', 'dypet', s.figur]);
 });
 
-test('klassene gir litt ulike startverdier', () => {
+test('klassene gir ulike startverdier, men er like mye verdt (4 liv = 1 skade)', () => {
   const verdi = (id) => {
     const s = lagSpiller({});
     velgKlasse(s, id);
     return [maksLiv(s), skadeBonus(s)];
   };
-  const [r, a, t] = KLASSER.map((k) => verdi(k.id));
-  assert.ok(r[0] > a[0] && a[0] > t[0]);
-  assert.ok(r[1] < a[1] && a[1] < t[1]);
+  const verdier = KLASSER.map((k) => verdi(k.id));
+  assert.equal(new Set(verdier.map(([liv, skade]) => liv + 4 * skade)).size, 1);
+  assert.ok(new Set(verdier.map((v) => v.join())).size >= 4);
 });
 
 test('slett glemmer helten', () => {

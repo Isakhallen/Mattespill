@@ -7,8 +7,11 @@
 | 0x72 DungeonTileset II v1.7 | <https://0x72.itch.io/dungeontileset-ii> | CC0 | `assets/dungeon.png`, `assets/dungeon.json` |
 | The Essential Retro Video Game Sound Effects Collection [512 sounds], Juhani Junkala | <https://opengameart.org/content/512-sound-effects-8-bit-style> | CC0 | `assets/lyd/*.wav` |
 | Tiny Town 1.1, Kenney | <https://opengameart.org/content/tiny-town> (fra <https://kenney.nl>) | CC0 | `assets/ute.png` |
+| Roguelike Characters, Kenney (heltene settes sammen av delene) | <https://opengameart.org/content/roguelike-character-pack> (fra <https://kenney.nl>) | CC0 | `assets/helter.png` (= `Spritesheet/roguelikeChar_transparent.png`) |
 | Ninja Adventure Asset Pack, Pixel-boy og AAA (musikken `theme_lost_village`, `theme_swamp`, `theme_plain` og `theme_dream`) | <https://pixel-boy.itch.io/ninja-adventure-asset-pack> (filene hentet fra <https://github.com/pixel-boy/NinjaAdventure/tree/main/audio/music>) | CC0 | `assets/lyd/kjelleren.ogg`, `assets/lyd/dypet.ogg`, `assets/lyd/verden.ogg`, `assets/lyd/ishula.ogg` |
 
 `assets/dungeon.json` lages fra pakkens `tile_list` med `node verktoy/lag-atlas.mjs <mappa med pakken>`.
 
 Lydfilene har fått nye navn. Originalene: `treff` = `sfx_damage_hit3`, `tungt` = `sfx_sounds_impact5`, `magi` = `sfx_wpn_laser3`, `bom` = `sfx_sound_neutral1`, `au` = `sfx_sounds_damage1`, `seier` = `sfx_sounds_fanfare3`, `nivaa` = `sfx_sounds_fanfare1`, `kiste` = `sfx_coin_double1`, `drikk` = `sfx_sounds_powerup3`, `trapp` = `sfx_movement_stairs1a`, `svak` = `sfx_exp_short_hard8`, `preller` = `sfx_sounds_impact3`, `gull` = `sfx_coin_single1`, `bombe` = `sfx_exp_medium1`.
+
+Folkene og klassene i heltelaget (`src/data/folkeslag/`, `src/data/klasser/` og klasseangrepene i `src/data/angrep/`) bygger på ideer fra System Reference Document 5.1 («SRD 5.1») av Wizards of the Coast LLC, <https://dnd.wizards.com/resources/systems-reference-document>. SRD 5.1 er lisensiert under Creative Commons Attribution 4.0 International, <https://creativecommons.org/licenses/by/4.0/legalcode>. Navnene er oversatt til norsk, og reglene er laget på nytt for spillet.

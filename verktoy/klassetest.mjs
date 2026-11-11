@@ -47,7 +47,7 @@ async function okt(navn) {
   await vent(1000);
   await cdp('Runtime.enable', {}, sessionId);
   console.log('økt', navn, sessionId.slice(0, 4));
-  await js(sessionId, `localStorage.setItem('mattespill', JSON.stringify({ versjon: 1, klasse: 'ridder', kart: 'verden', sett: ['verden'] }));
+  await js(sessionId, `localStorage.setItem('mattespill', JSON.stringify({ versjon: 1, klasse: 'kriger', folk: 'menneske', kart: 'verden', sett: ['verden'] }));
     localStorage.setItem('mattespill-nett', JSON.stringify({ navn: '${navn}', kode: '${kode}' }))`);
   await cdp('Page.navigate', { url: `${URL0}/` }, sessionId);
   return { targetId, sessionId };

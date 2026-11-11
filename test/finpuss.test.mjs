@@ -10,9 +10,9 @@ const lager = () => {
 };
 
 test('heltekortet viser nivå, utstyr, angrep og bossen', () => {
-  const s = lagSpiller({ klasse: 'ridder', erfaring: 30, utstyr: ['rustentSverd', 'laervest', 'sverd'] });
+  const s = lagSpiller({ klasse: 'kriger', folk: 'menneske', erfaring: 30, utstyr: ['rustentSverd', 'laervest', 'sverd'] });
   const k = kortet(s);
-  assert.equal(k.tittel, 'Ridder · Nivå 3');
+  assert.equal(k.tittel, 'Kriger · Nivå 3');
   const linje = Object.fromEntries(k.linjer);
   assert.equal(linje['Våpen'], 'Sverd');
   assert.equal(linje['Rustning'], 'Lærvest');

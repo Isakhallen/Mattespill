@@ -1,4 +1,4 @@
-import { ANGREP, MAKS_ANGREP, medTall } from './kamp.js';
+import { ANGREP, MAKS_ANGREP, medTall, egnet, forsterk } from './kamp.js';
 import { STIGE } from './oppgaver.js';
 import { nivaa, skadeBonus } from './vekst.js';
 import { merkeFor, merkeLerret } from './merker.js';
@@ -10,9 +10,9 @@ export const verdi = (a) => (a.heler ? `+${a.skade} liv` : a.under ?? `${a.skade
 // Svakhetene står ikke her heller.
 export function boka(s) {
   const n = nivaa(s.erfaring);
-  return ANGREP.map((a) => {
+  return ANGREP.filter((a) => egnet(a, s)).map((a) => {
     const laast = (a.nivaa ?? 1) > n;
-    const m = medTall(a, s.tilpasning.trinn, skadeBonus(s));
+    const m = forsterk(medTall(a, s.tilpasning.trinn, skadeBonus(s)), s);
     return {
       id: a.id,
       navn: a.navn,

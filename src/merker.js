@@ -11,6 +11,8 @@ const MERKER = {
   frys: ['b..b..b', '.b.b.b.', '..bwb..', 'bbwwwbb', '..bwb..', '.b.b.b.', 'b..b..b'],
   svekket: ['..ppp..', '..ppp..', '..ppp..', 'ppppppp', '.ppppp.', '..ppp..', '...p...'],
   skjold: ['ooooooo', 'ossssso', 'osswsso', 'oswwwso', '.oswso.', '..oso..', '...o...'],
+  raseri: ['...r...', '..rrr..', '.rrrrr.', 'rrrrrrr', '..rrr..', '..rrr..', '..rrr..'],
+  merket: ['..yyy..', '.y...y.', 'y..y..y', 'y.yyy.y', 'y..y..y', '.y...y.', '..yyy..'],
   liv: ['..lll..', '..lwl..', 'lllwlll', 'lwwwwwl', 'lllwlll', '..lwl..', '..lll..'],
   utrop: ['..yyy..', '..yyy..', '..yyy..', '..yyy..', '.......', '..yyy..', '..yyy..'],
   spor: ['.yyyyy.', 'yy...yy', '....yy.', '...yy..', '...yy..', '.......', '...yy..'],

@@ -141,7 +141,7 @@ test('de sterkeste angrepene hviler etter et treff, men ikke etter bom', () => {
 test('fiendene har egne bokstaver og figurer som finnes i atlaset', () => {
   const atlas = readFileSync(new URL('../assets/dungeon.json', import.meta.url), 'utf8');
   assert.equal(new Set(FIENDER.map((f) => f.tegn)).size, FIENDER.length);
-  for (const f of [...FIENDER, helt, ...KLASSER]) {
+  for (const f of [...FIENDER, helt]) {
     for (const del of ['idle', 'run']) {
       assert.ok(atlas.includes(`"${f.figur}_${del}_anim_f3"`), `${f.figur} mangler ${del}`);
     }
@@ -151,8 +151,8 @@ test('fiendene har egne bokstaver og figurer som finnes i atlaset', () => {
 
 const angrep = (id) => ANGREP.find((a) => a.id === id);
 
-test('12–15 angrep med eget navn, element og oppgave, og de sterkeste hviler', () => {
-  assert.ok(ANGREP.length >= 12 && ANGREP.length <= 15);
+test('15 felles angrep og egne for klasser og folk, med eget navn, element og oppgave, og de sterkeste hviler', () => {
+  assert.equal(ANGREP.filter((a) => !a.klasse && !a.folk).length, 15);
   assert.equal(new Set(ANGREP.map((a) => a.id)).size, ANGREP.length);
   for (const a of ANGREP) {
     assert.ok(a.element && a.navn, a.id);
@@ -212,7 +212,7 @@ test('svakheter gjelder også gift og brann', () => {
 test('angrepsboka: alle angrep står der, låste med nivå, og eleven velger høyst seks', () => {
   const s = lagSpiller({ erfaring: grense(5) });
   const b = boka(s);
-  assert.equal(b.length, ANGREP.length);
+  assert.equal(b.length, ANGREP.filter((a) => !a.klasse && !a.folk).length);
   assert.deepEqual(b.find((a) => a.id === 'jordskjelv').linjer, ['Nivå 9']);
   assert.ok(b.filter((a) => a.valgt).length <= MAKS_ANGREP);
   for (const a of b) for (const l of a.linjer) assert.doesNotMatch(l, /svak|tåler|element/i);

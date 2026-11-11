@@ -2,13 +2,14 @@ import { vedSiden } from '../kart.js';
 import { finnVei } from '../vei.js';
 import { tegnKart, R, DYBDE } from '../tegnKart.js';
 import { tegnUte } from '../tegnUte.js';
-import { lagAnimasjoner, figurbilde } from '../figur.js';
+import { lagAnimasjoner, figurbilde, harFigur } from '../figur.js';
+import { erHeltekode } from '../utseende.js';
+import { lagHeltelag } from '../heltelag.js';
 import { FIENDER, fiendeFor, fiendeNivaa, lagFiende, tilNivaa } from '../fiender.js';
-import { spiller, lagre, velgKlasse } from '../spiller.js';
+import { spiller, lagre, velgHelt, figurFor } from '../spiller.js';
 import { nivaa, maksLiv, kampErfaring, kampGull, krukkeGull, kisteGull, giErfaring, nesteUtstyr } from '../vekst.js';
 import { KISTE, KISTE_LUKKET, KISTE_AAPEN, DRIKK, DRIKK_BILDE, KRUKKE, MYNT, BUTIKK, SELGER } from '../utstyr.js';
 import { lagButikk } from '../butikk.js';
-import { KLASSER } from '../klasser.js';
 import { kartFor, FORSTE, lesKartData, UTGANG, utgang, inngangFra, portAapen, portEtter } from '../kartliste.js';
 import { slett } from '../lagring.js';
 import { lagOppgaverute } from '../oppgaverute.js';
@@ -47,6 +48,7 @@ export default class Verden extends Phaser.Scene {
 
   preload() {
     this.load.atlas('dungeon', 'assets/dungeon.png', 'assets/dungeon.json');
+    this.load.image('helter', 'assets/helter.png');
     this.load.spritesheet('ute', 'assets/ute.png', { frameWidth: R, frameHeight: R });
     lastEffekter(this);
   }
@@ -121,6 +123,7 @@ export default class Verden extends Phaser.Scene {
     this.andre = new Map();
     this.kobleTil();
     this.heltekort ??= lagHeltekort();
+    this.heltelag ??= lagHeltelag();
     this.bok ??= lagAngrepsbok();
     this.butikken ??= lagButikk();
     musikk(this, this.kartData.musikk ?? this.kartId);
@@ -160,7 +163,7 @@ export default class Verden extends Phaser.Scene {
 
   // Historie ved start og første gang helten kommer til et kart.
   async velkommen() {
-    if (!spiller.klasse) await this.velgHelt();
+    if (!spiller.klasse || spiller.velgIgjen) await this.velgHelt();
     const tekst = this.kartData.tekst;
     if (!tekst || spiller.sett.includes(this.kartId)) return;
     this.stopp();
@@ -170,18 +173,28 @@ export default class Verden extends Phaser.Scene {
     this.slipp();
   }
 
+  // Ny helt: historien og heltelaget. En helt fra før heltelaget fikk folk og utseende,
+  // får velge dem nå og beholder nivå og utstyr.
   async velgHelt() {
     this.stopp();
-    for (const t of START) await this.beskjed.vis(t);
-    const valg = KLASSER.map((k) => ({ navn: k.navn, under: k.om, bilde: figurbilde(this, k.figur) }));
-    const i = await this.beskjed.vis('Velg din helt:', valg);
-    velgKlasse(spiller, KLASSER[i].id);
-    lagAnimasjoner(this, spiller.figur);
+    const ny = !spiller.klasse;
+    if (ny) for (const t of START) await this.beskjed.vis(t);
+    else await this.beskjed.vis('Nå kan du velge folk, klasse og utseende til helten din!');
+    velgHelt(spiller, await this.heltelag.vis(this, spiller, { start: true }));
     this.byttFigur();
     lagre();
     this.status.vis(spiller);
-    await this.beskjed.vis(ETTER_VALG);
+    if (ny) await this.beskjed.vis(ETTER_VALG);
     this.slipp();
+  }
+
+  // Heltelaget fra heltekortet: eleven kan endre helten når som helst.
+  async endreHelt() {
+    const valg = await this.heltelag.vis(this, spiller);
+    if (!valg) return;
+    velgHelt(spiller, valg);
+    this.byttFigur();
+    lagre();
   }
 
   // Navnet klassen ser, og klassekoden.
@@ -226,10 +239,9 @@ export default class Verden extends Phaser.Scene {
 
   // Tegner de andre slik radene fra Firebase sier. Kjøres i hvert bilde.
   synkAndre() {
-    const tekstur = this.textures.get('dungeon');
     const gyldige = new Map();
     for (const [uid, r] of this.nettverk.radene) {
-      const rad = lesRad(r, (f) => tekstur.has(`${f}_idle_anim_f0`));
+      const rad = lesRad(r, (f) => harFigur(this, f));
       if (rad) gyldige.set(uid, rad);
     }
     for (const [uid, a] of this.andre) {
@@ -270,7 +282,8 @@ export default class Verden extends Phaser.Scene {
       a.lapp.dataset.nivaa = rad.nivaa;
       a.lapp.hidden = !syn.contains(a.bilde.x, a.bilde.y);
       const x = lerret.left + (a.bilde.x - syn.x) * k;
-      const y = lerret.top + (a.bilde.y - a.bilde.height * 0.75 - syn.y) * k; // figurene har luft over hodet
+      const hoyde = erHeltekode(a.figur) ? a.bilde.height - 1 : a.bilde.height * 0.75; // figurene i atlaset har luft over hodet
+      const y = lerret.top + (a.bilde.y - hoyde - syn.y) * k;
       a.lapp.style.transform = `translate(${x}px, ${y}px) translate(-50%, -100%)`;
     }
     const vist = `${this.andre.size} ${this.nettverk.tilkoblet}`;
@@ -340,8 +353,9 @@ export default class Verden extends Phaser.Scene {
     }
   }
 
-  // Helten får figuren fra klassen eller drakten.
+  // Helten får figuren fra utseendet eller drakten. Nytt våpen eller ny rustning kan også synes.
   byttFigur() {
+    spiller.figur = figurFor(spiller);
     lagAnimasjoner(this, spiller.figur);
     this.staar = `${spiller.figur}_idle`;
     this.helt.play(this.staar);
@@ -473,7 +487,7 @@ export default class Verden extends Phaser.Scene {
 
   // Belønning fra folk: erfaring og gull.
   async belonn({ erfaring = 0, gull = 0 }) {
-    const e = giErfaring(spiller.erfaring, erfaring);
+    const e = giErfaring(spiller.erfaring, erfaring, spiller);
     spiller.erfaring = e.erfaring;
     let tekst = `+${erfaring} erfaring.`;
     if (gull) {
@@ -526,7 +540,7 @@ export default class Verden extends Phaser.Scene {
   async visKort() {
     if (this.opptatt) return;
     this.stopp();
-    await this.heltekort.vis(this, spiller);
+    if ((await this.heltekort.vis(this, spiller)) === 'endre') await this.endreHelt();
     this.slipp();
   }
 
@@ -593,6 +607,7 @@ export default class Verden extends Phaser.Scene {
       const foer = maksLiv(spiller);
       spiller.utstyr.push(u.id);
       spiller.liv += maksLiv(spiller) - foer;
+      this.byttFigur();
       spill(this, 'kiste');
       tekst = `Du fant: ${u.navn}! ` + (u.slag === 'vaapen' ? `+${u.skade} skade.` : `+${u.liv} liv.`);
     }
@@ -662,9 +677,9 @@ export default class Verden extends Phaser.Scene {
   // som { tekst, lyd }.
   oppgjor(fiende, k) {
     const seier = k.utfall === 'seier';
-    const poeng = kampErfaring(fiende, k);
+    const poeng = kampErfaring(fiende, k, spiller);
     const gull = kampGull(fiende, k);
-    const e = giErfaring(spiller.erfaring, poeng);
+    const e = giErfaring(spiller.erfaring, poeng, spiller);
     spiller.erfaring = e.erfaring;
     spiller.gull += gull;
     spiller.liv = k.heltLiv;

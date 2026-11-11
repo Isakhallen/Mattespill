@@ -1,6 +1,7 @@
-import { VARER, MAKS_TING, vareFor, draktFor } from './varer.js';
+import { VARER, MAKS_TING, vareFor, draktFor, hodeplaggFor } from './varer.js';
 import { maksLiv } from './vekst.js';
-import { figurFor } from './spiller.js';
+import { figurFor, utseendeFor } from './spiller.js';
+import { kodeFor } from './utseende.js';
 import { atlasbilde, figurbilde } from './figur.js';
 
 // Butikken: regler uten HTML først, så de kan testes med Node.
@@ -9,6 +10,7 @@ import { atlasbilde, figurbilde } from './figur.js';
 export function antall(s, v) {
   if (v.slag === 'ting') return s.ting[v.id] ?? 0;
   if (v.slag === 'drakt') return s.drakter.includes(v.id) ? 1 : 0;
+  if (v.slag === 'hode') return s.hoder.includes(v.id) ? 1 : 0;
   return s.utstyr.includes(v.id) ? 1 : 0;
 }
 const flest = (v) => (v.slag === 'ting' ? MAKS_TING : 1);
@@ -24,7 +26,7 @@ export function gir(v) {
 export const hylle = (s) =>
   VARER.map((v) => {
     const har = antall(s, v);
-    return { id: v.id, navn: v.navn, slag: v.slag, linje: gir(v), pris: v.pris, har, fullt: har >= flest(v), paa: s.drakt === v.id };
+    return { id: v.id, navn: v.navn, slag: v.slag, linje: gir(v), pris: v.pris, har, fullt: har >= flest(v), paa: v.slag === 'hode' ? hodeplaggFor(s)?.id === v.id : s.drakt === v.id };
   });
 
 // Endrer helten. Liv fra rustning og drakt som kommer eller går, følger med.
@@ -35,7 +37,7 @@ function endre(s, gjor) {
   s.liv = Math.min(maksLiv(s), Math.max(1, s.liv + maksLiv(s) - foer));
 }
 
-// Kjøper en vare for «pris» gull. En ny drakt tas på med en gang. Gir true hvis det gikk.
+// Kjøper en vare for «pris» gull. En ny drakt eller et nytt hodeplagg tas på med en gang. Gir true hvis det gikk.
 export function kjop(s, id, pris = vareFor(id)?.pris) {
   const v = vareFor(id);
   if (!v || s.gull < pris || antall(s, v) >= flest(v)) return false;
@@ -45,6 +47,9 @@ export function kjop(s, id, pris = vareFor(id)?.pris) {
     else if (v.slag === 'drakt') {
       s.drakter.push(v.id);
       s.drakt = v.id;
+    } else if (v.slag === 'hode') {
+      s.hoder.push(v.id);
+      settHode(s, v);
     } else s.utstyr.push(v.id);
   });
   return true;
@@ -60,8 +65,25 @@ export function selg(s, id) {
     else if (v.slag === 'drakt') {
       s.drakter = s.drakter.filter((d) => d !== v.id);
       if (s.drakt === v.id) s.drakt = null;
+    } else if (v.slag === 'hode') {
+      if (hodeplaggFor(s)?.id === v.id) s.utseende.hode = 0;
+      s.hoder = s.hoder.filter((h) => h !== v.id);
     } else s.utstyr = s.utstyr.filter((u) => u !== v.id);
   });
+  return true;
+}
+
+// Hodeplagget på (drakten av, så det synes), eller av (v = null).
+function settHode(s, v) {
+  s.utseende.hode = v ? v.rader[0] + 1 : 0;
+  if (v) s.drakt = null;
+}
+
+// Tar på eller av et hodeplagg eleven eier.
+export function hodePaa(s, id) {
+  const v = vareFor(id);
+  if (v?.slag !== 'hode' || !s.hoder.includes(id)) return false;
+  endre(s, () => settHode(s, hodeplaggFor(s)?.id === id ? null : v));
   return true;
 }
 
@@ -118,7 +140,11 @@ export function lagButikk() {
   };
 
   const bilde = (v) => {
-    const b = v.slag === 'drakt' ? figurbilde(hjelp.scene, v.figur, 2) : v.bilde && atlasbilde(hjelp.scene, v.bilde, 2);
+    const medHode = () => kodeFor({ ...utseendeFor(s), hode: v.rader[0] + 1 });
+    const b =
+      v.slag === 'drakt' ? figurbilde(hjelp.scene, v.figur, 2)
+      : v.slag === 'hode' ? figurbilde(hjelp.scene, medHode(), 2)
+      : v.bilde && atlasbilde(hjelp.scene, v.bilde, 2);
     const ramme = document.createElement('span');
     ramme.className = 'bilde';
     if (b) ramme.append(b);
@@ -159,7 +185,7 @@ export function lagButikk() {
         knapp(`${tilbud}: regn ut prisen`, 'rabatt', h.fullt || s.gull < billig || brukt.has(v.id)),
       );
       if (h.har) handel.append(knapp(`Selg · ${salgspris(v)} gull`, 'selg'));
-      if (h.har && h.slag === 'drakt') handel.append(knapp(h.paa ? 'Ta av' : 'Ta på', 'paa'));
+      if (h.har && (h.slag === 'drakt' || h.slag === 'hode')) handel.append(knapp(h.paa ? 'Ta av' : 'Ta på', 'paa'));
     }
     // Fokus på knappen eleven brukte, ellers på varen.
     const mal = fokus && (el(`.handel .${fokus}:not(:disabled)`) ?? el(`.vare[data-id="${valgt}"]`));
@@ -174,6 +200,10 @@ export function lagButikk() {
     } else if (hva === 'selg' && selg(s, v.id)) {
       hjelp.lyd('gull');
       si(`Du solgte ${v.navn} for ${salgspris(v)} gull.`);
+    } else if (hva === 'paa' && v.slag === 'hode') {
+      hodePaa(s, v.id);
+      hjelp.lyd('magi');
+      si(hodeplaggFor(s) ? `Du har på ${v.navn}.` : `Du tok av ${v.navn}.`);
     } else if (hva === 'paa') {
       taPaa(s, s.drakt === v.id ? null : v.id);
       hjelp.lyd('magi');
