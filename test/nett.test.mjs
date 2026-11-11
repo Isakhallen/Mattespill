@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { lagNavn, gyldigNavn, rensKode, lagNett } from '../src/nett.js';
+import { readFileSync } from 'node:fs';
+import { lagNavn, gyldigNavn, rensKode, lagNett, navnTall, navnFra, radFor, lesRad, KODE_MIN, KODE_MAKS } from '../src/nett.js';
 import { lesNett, skrivNett } from '../src/lagring.js';
 import { ADJEKTIV, DYR } from '../src/data/nettnavn.js';
 
@@ -28,11 +29,45 @@ test('fritekst er ikke et gyldig navn', () => {
 
 test('klassekoden får store bokstaver og bare bokstaver og tall', () => {
   assert.equal(rensKode('ulv'), 'ULV');
-  assert.equal(rensKode(' 1p-b ø '), '1PBØ');
+  assert.equal(rensKode(' 1p-b ø '), '1PB');
   assert.equal(rensKode('abcdefghijk'), 'ABCDEFGH');
   assert.equal(rensKode('a.b'), '');
   assert.equal(rensKode('x/$#[]'), '');
   assert.equal(rensKode(undefined), '');
+});
+
+test('navnet blir to tall og tilbake', () => {
+  for (let i = 0; i < 50; i++) {
+    const navn = lagNavn();
+    assert.equal(navnFra(navnTall(navn)), navn);
+  }
+  assert.equal(navnFra({ a: 99, d: 0 }), null);
+  assert.equal(navnFra(undefined), null);
+});
+
+test('reglene i Firebase har samme antall ord og samme kode som spillet', () => {
+  const regler = readFileSync(new URL('../database.rules.json', import.meta.url), 'utf8');
+  assert.equal(ADJEKTIV.length, 25);
+  assert.equal(DYR.length, 25);
+  assert.match(regler, /newData\.val\(\) < 25/);
+  assert.match(regler, /\^\[A-Z0-9\]\{3,8\}\$/);
+  assert.equal(KODE_MIN, 3);
+  assert.equal(KODE_MAKS, 8);
+});
+
+test('raden som sendes, har bare tall og figur, og kan leses tilbake', () => {
+  const rad = radFor('Kloke Ugle', 'elf_f', 4, 12, 7);
+  assert.deepEqual(Object.keys(rad).sort(), ['a', 'd', 'figur', 'nivaa', 'x', 'y']);
+  assert.ok(!JSON.stringify(rad).includes('Ugle'));
+  assert.deepEqual(lesRad(rad), { navn: 'Kloke Ugle', figur: 'elf_f', nivaa: 4, x: 12, y: 7 });
+});
+
+test('rare rader fra Firebase vises ikke', () => {
+  const god = radFor('Kloke Ugle', 'elf_f', 4, 12, 7);
+  for (const feil of [null, {}, { ...god, a: 30 }, { ...god, nivaa: 0 }, { ...god, x: 1.5 }, { ...god, figur: 7 }]) {
+    assert.equal(lesRad(feil), null);
+  }
+  assert.equal(lesRad(god, () => false), null);
 });
 
 test('lagNett tåler rare verdier', () => {

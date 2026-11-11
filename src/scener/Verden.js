@@ -15,7 +15,8 @@ import { lagOppgaverute } from '../oppgaverute.js';
 import { lagKampvisning } from '../kampvisning.js';
 import { lagStatus } from '../status.js';
 import { lagKlasserom } from '../klasserom.js';
-import { nett, lagreNett } from '../nett.js';
+import { nett, lagreNett, radFor, lesRad } from '../nett.js';
+import { lagNettverk } from '../nettverk.js';
 import { lagBeskjed } from '../beskjed.js';
 import { kjorOving } from '../oving.js';
 import { lastEffekter, spill, musikk, settLyd, lydPaa } from '../lyd.js';
@@ -110,8 +111,15 @@ export default class Verden extends Phaser.Scene {
     if (!this.klasserom) {
       this.klasserom = lagKlasserom();
       lagreNett(); // så navnet er det samme neste gang
-      this.status.klassen(nett.kode);
+      this.nettverk = lagNettverk();
+      this.lapper = document.createElement('div');
+      this.lapper.id = 'lapper';
+      document.body.append(this.lapper);
     }
+    // De andre i klassen på dette kartet: uid → { bilde, lapp, x, y, figur }.
+    this.andre?.forEach((a) => a.lapp.remove());
+    this.andre = new Map();
+    this.kobleTil();
     this.heltekort ??= lagHeltekort();
     this.bok ??= lagAngrepsbok();
     this.butikken ??= lagButikk();
@@ -180,10 +188,90 @@ export default class Verden extends Phaser.Scene {
   async visKlasserom() {
     if (this.opptatt) return;
     this.stopp();
+    const kode = nett.kode;
     Object.assign(nett, await this.klasserom.vis(nett));
     lagreNett();
-    this.status.klassen(nett.kode);
+    if (nett.kode !== kode) this.kobleTil();
     this.slipp();
+  }
+
+  // Blir med i klassen på dette kartet (eller går ut hvis eleven spiller alene).
+  async kobleTil() {
+    this.visKlassen(true);
+    await this.nettverk.bliMed(nett.kode, this.kartId, this.minRad());
+    this.visKlassen();
+  }
+
+  visKlassen(kobler = false) {
+    const n = this.nettverk;
+    let tekst = null; // ingen knapp uten Firebase
+    if (n.finnes && !nett.kode) tekst = 'Klassen';
+    else if (n.finnes) {
+      const her = n.tilkoblet ? ` · ${this.andre.size} andre her` : kobler ? '' : ' · ingen nett';
+      tekst = `Klassen: ${nett.kode}${her}`;
+    }
+    this.status.klassen(tekst);
+  }
+
+  // Det klassen får vite om helten, eller null før eleven har valgt helt.
+  minRad() {
+    if (!spiller.klasse) return null;
+    return radFor(nett.navn, spiller.figur, nivaa(spiller.erfaring), this.rute.x, this.rute.y);
+  }
+
+  // Tegner de andre slik radene fra Firebase sier. Kjøres i hvert bilde.
+  synkAndre() {
+    const tekstur = this.textures.get('dungeon');
+    const gyldige = new Map();
+    for (const [uid, r] of this.nettverk.radene) {
+      const rad = lesRad(r, (f) => tekstur.has(`${f}_idle_anim_f0`));
+      if (rad) gyldige.set(uid, rad);
+    }
+    for (const [uid, a] of this.andre) {
+      if (gyldige.has(uid)) continue;
+      a.bilde.destroy();
+      a.lapp.remove();
+      this.andre.delete(uid);
+    }
+    const lerret = this.game.canvas.getBoundingClientRect();
+    const k = lerret.width / this.scale.width; // skjermpiksler per spillpiksel
+    const syn = this.cameras.main.worldView;
+    for (const [uid, rad] of gyldige) {
+      let a = this.andre.get(uid);
+      if (!a || a.figur !== rad.figur) {
+        a?.bilde.destroy();
+        lagAnimasjoner(this, rad.figur);
+        const p = this.piksel(rad.x, rad.y);
+        const bilde = this.add.sprite(p.x, p.y, 'dungeon').setOrigin(0.5, 1).setDepth(DYBDE.helt - 1);
+        bilde.play(`${rad.figur}_idle`);
+        const lapp = a?.lapp ?? this.lapper.appendChild(document.createElement('div'));
+        lapp.className = 'lapp';
+        a = { bilde, lapp, x: rad.x, y: rad.y, figur: rad.figur };
+        this.andre.set(uid, a);
+      }
+      if (a.x !== rad.x || a.y !== rad.y) {
+        if (rad.x !== a.x) a.bilde.setFlipX(rad.x < a.x);
+        Object.assign(a, { x: rad.x, y: rad.y });
+        a.bilde.play(`${rad.figur}_run`, true);
+        this.tweens.killTweensOf(a.bilde);
+        this.tweens.add({
+          targets: a.bilde,
+          ...this.piksel(rad.x, rad.y),
+          duration: 250,
+          onComplete: () => a.bilde.play(`${rad.figur}_idle`, true),
+        });
+      }
+      if (a.lapp.textContent !== rad.navn) a.lapp.textContent = rad.navn;
+      a.lapp.dataset.nivaa = rad.nivaa;
+      a.lapp.hidden = !syn.contains(a.bilde.x, a.bilde.y);
+      const x = lerret.left + (a.bilde.x - syn.x) * k;
+      const y = lerret.top + (a.bilde.y - a.bilde.height * 0.75 - syn.y) * k; // figurene har luft over hodet
+      a.lapp.style.transform = `translate(${x}px, ${y}px) translate(-50%, -100%)`;
+    }
+    if (this.andre.size !== this.vistAntall) {
+      this.vistAntall = this.andre.size;
+      this.visKlassen();
+    }
   }
 
   // Spør først. Ja glemmer helten og starter spillet på nytt.
@@ -620,6 +708,8 @@ export default class Verden extends Phaser.Scene {
   }
 
   update() {
+    this.nettverk.send(this.minRad());
+    this.synkAndre();
     if (this.gaar) return;
     if (this.opptatt) {
       this.helt.play(this.staar, true);

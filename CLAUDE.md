@@ -17,11 +17,12 @@ Elevene skal få lyst til å regne, og alle skal føle mestring. Når hensyn kol
 - Forskjellige angrep gir forskjellige oppgavetyper.
 - Drivkraft: helt som blir sterkere, tøffe bosser, historie og noe å vise fram.
 - Skole-PC med Windows, tastatur og mus. Hver elev spiller for seg.
-- Framgang lagres i nettleseren (localStorage). Ingen innlogging, og ingen elevdata sendes noe sted.
+- Framgang lagres i nettleseren (localStorage). Ingen innlogging.
+- «Spill med klassen» (bøtte 13, personvern godkjent av skolen): bare med klassekode, og da sendes bare et laget heltenavn (som to tall), figur, nivå, kart og rute til Firebase (Realtime Database i EU, anonym bruker uten e-post). Raden slettes når eleven går. Ingen fritekst, chat, oppgaver, svar eller resultater sendes. Uten kode lastes Firebase ikke engang.
 
 ## Teknikk
 
-- Phaser 3.90.0 i `vendor/`, vanlige ES-moduler, ingen byggesteg og ingen CDN. Statisk nettsted for GitHub Pages.
+- Phaser 3.90.0 og Firebase JS SDK 13.1.0 (`vendor/firebase/`) i `vendor/`, vanlige ES-moduler, ingen byggesteg og ingen CDN. Statisk nettsted for GitHub Pages.
 - 2D sett ovenfra med pikselkunst (16×16). Ikke 3D. Over bakken: Kenneys Tiny Town (CC0). Under bakken: mørk dungeon fra 0x72 DungeonTileset II (CC0).
 - Oppgavene vises som HTML oppå spillet.
 - Kart skrives som tekst, ett tegn per rute. Claude lager kartene.
@@ -44,7 +45,7 @@ Læreren trenger ikke godkjenne hver bøtte. Bygg bøttene etter planen, test se
 10. **Verden over bakken** (ferdig): verdenskart med landsby og porter ned til områdene.
 11. **Snille folk** (ferdig): folk å snakke med, hint og små oppdrag.
 12. **Nye områder** (ferdig): 4–5 områder (f.eks. skog, sump, ishule, lavagrotte, gravkammer) med egne fiender og egen boss.
-13. **Online**: elevene ser hverandre. Bryter «ingen elevdata sendes noe sted» og trenger en tjeneste (f.eks. Firebase eller Supabase). Læreren må avklare personvern med skolen før bøtta starter.
+13. **Online** (bygd på grenen `botte-13-online`, venter på Firebase-prosjektet): elevene med samme klassekode ser hverandres helter på kartet. Personvern er godkjent.
 14. **Test med klassen**: prøv spillet i klassen og juster etterpå.
 
 ## Slik står det etter bøtte 12
@@ -79,16 +80,17 @@ Læreren trenger ikke godkjenne hver bøtte. Bygg bøttene etter planen, test se
 - Folk: `src/data/folk/` (én fil per person: `tegn` i kartet, `navn`, `figur`, `snakk`, og `regn`, `tips` eller `borte`) og `src/folk.js` med reglene (testes i Node). Landsbyen har Smeden Dag `D`, Bakeren Elsa `E`, Vise Vilja `V`, Vakta Ane `A`, Tuva `T` og Pelle `P` (også i kjelleren). Helten prater ved å gå inn i en person. `snakkOm` gir det personen sier om oppdraget sitt, ellers gir `replikk` neste linje i `snakk` (Vilja gir tipset for elevens trinn fra `src/data/tips.js`). Elsa (`regn`) gir en oppgave på elevens trinn én gang hver gang helten kommer til kartet: rett gir fullt liv og +2 erfaring, feil er ufarlig. Merkene `utrop` (nytt oppdrag) og `spor` (belønning venter) fra `src/merker.js` står over hodet.
 - Oppdrag: `src/data/oppdrag/` (`gir` er personen, `slag` er `slaa` med `fiende` og `antall` eller `finn` med `person`, og `start`, `underveis`, `takk`, `erfaring`, `gull`). `spiller.oppdrag` er `{ id: { steg, antall } }` med stegene ny, aktiv, klar og ferdig, og lagres. Slåtte fiender teller også før eleven har fått oppdraget (`slaattFiende` i `oppgjor`). Den som er `borte`, står der til den er funnet, og hjemme etterpå. `belonn` i Verden gir erfaringen og gullet. `vokst(e)` gir meldingene om nytt nivå og nye angrep, også i `oppgjor`.
 - Områder (bøtte 12): portene på verdenskartet har `krever` (bossen som må være slått) og `retning`. `portAapen(u, bosser)` og `portEtter(bossId)` står i `src/kartliste.js`. Rekkefølgen er Kjelleren/Dypet (Tallslukeren `B`) → Skogen 2 (nivå 4, Skogtrollet Halvdan `H`) → Sumpen 3 (nivå 6, Myrkongen `K`, skjold) → Ishula 4 (nivå 8, Isjotnen `J`) → Lavagrotta 5 (nivå 10, Lavakjempen `L`, skjold, den siste). Nye fiender: tusse `t`, skogøgle `l`, myrzombie `z`, giftblander `d`, isskjelett `e`, snøtusse `n`, glødebukk `c` og askeskjelett `a`. `farge` på et kart toner hula og kamparenaen (`tegnKart(scene, kart, farge)`), og `farge` på en fiende toner figuren. `musikk` på et kart låner sporet til et annet kart (bare `ishula.ogg` er nytt). `spiller.bosser` lagres, og et gammelt lager med `seire` får `tallslukeren`. Etter hver boss: `etter`-tekstene, heltekortet, «Porten til … har åpnet seg!» og et nytt eventyr fra landsbyen (alle fiender, kister og krukker kommer tilbake på heltens nivå). Vakta Ane (`porter: true`) har «!» og forteller om den nyeste åpne porten til helten har vært der (`portNytt` i `src/folk.js`). Bosstekstene `foer` og `igjen` kan ikke ha ord som begynner med et element (en test passer på det).
+- Klassen (bøtte 13): `src/nett.js` har `nett` (`{ navn, kode }`, lagres under `mattespill-nett` via `lesNett`/`skrivNett`, så «Ny helt» ikke rører det), `lagNavn` (et ord fra hver liste i `src/data/nettnavn.js`, 25 + 25, bare snille ord), `navnTall`/`navnFra` (navnet som `{ a, d }`), `rensKode` (A–Z og 0–9, 3–8 tegn), `radFor` (det som sendes: `a`, `d`, `figur`, `nivaa`, `x`, `y`) og `lesRad` (sjekker en rad fra Firebase). `src/klasserom.js` er ruta «Spill med klassen» (navn, Nytt navn, klassekode, Bli med, Spill alene). Knappen «Klassen» i statuslinja (`status.klassen(tekst)`, null skjuler den) viser koden og «n andre her», og er skjult når `FIREBASE` i `src/data/firebase.js` er null. `src/nettverk.js` laster Firebase først ved `bliMed(kode, kart, rad)`, logger inn anonymt, skriver raden under `rom/KODE/kart/uid` med `onDisconnect().remove()`, lytter bare på samme kart og fyller `radene`. `send(rad)` sendes høyst hvert 250 ms og bare ved endring. Verden kaller `kobleTil()` ved hvert kart og etter ruta, `send` og `synkAndre()` i hvert bilde. `synkAndre` tegner de andre fra `radene` (de går gjennom alt) og legger HTML-lapper i `#lapper` med navn og nivå (lerretet er bare 320×180, så tekst der blir uskarp). Reglene står i `database.rules.json` og må limes inn i Firebase-konsollen når de endres. Testsider kan fylle `V.nettverk.radene` med falske rader.
 - Tast O starter øving (`src/oving.js`) med + og − for å bytte trinn. Den er en skjult lærertast med eget trinn, uten hint på skjermen.
 - Logikk testes med `node --test` i repo-roten, uten mappe som argument (`package.json` har bare `"type": "module"`).
 - Test i skjult Edge med `--mute-audio`: bruk ny `--user-data-dir` hver gang, ellers kommer gamle filer fra cache. Bruk `--virtual-time-budget=900000`: med mindre budsjett tar den virtuelle tiden slutt før alle modulene er lastet. Bruk en annen port enn 8010 hvis en annen økt kan ha en server oppe. En testside kan erstatte `V.oppgaverute.spor` med en funksjon som gir `'rett'`. Spill-løkka går nesten ikke med `--virtual-time-budget`. En midlertidig testside må vente til `spill.isRunning` er sann, kalle `spill.loop.stop()` og så `spill.step(tid, 16)` i en løkke med `await` på 16 ms mellom hvert bilde. Resultatet leses med `--dump-dom`. HTML-knapper trykkes med `.click()`, og svar sendes med `form.requestSubmit()`. Slett testsiden etterpå.
 
 ## Plan videre
 
-Bøtte 12 ble bygd i `C:/mattespill-b12` på grenen `botte-12-omrader` (bøtte 8–12), og `main` (der en annen økt hadde flettet inn bøtte 9) er flettet inn i den. Alt ligger i `main` og er sendt til GitHub.
+Bøtte 8–12 ligger i `main` og er sendt til GitHub. Bøtte 13 bygges på grenen `botte-13-online` i `C:/mattespill`.
 
-1. Grenene `botte-8` til `botte-12` og mappene `C:/mattespill-b10`, `-b11` og `-b12` kan ryddes bort etterpå.
-2. Bøtte 13 (Online) starter ikke før læreren har avklart personvern med skolen.
+1. Bøtte 13, resten: læreren lager Firebase-prosjektet (Realtime Database i `europe-west1`, anonym innlogging på, reglene fra `database.rules.json` limt inn) og gir `firebaseConfig` (med `databaseURL`). Lim den inn i `src/data/firebase.js`, test med to skjulte Edge-vinduer med samme kode (de skal se hverandre, og raden skal forsvinne når det ene lukkes), flett inn i `main` og send til GitHub. Gratisplanen tåler 100 samtidige og 10 GB nedlasting i måneden, og den stopper i stedet for å koste penger.
+2. Grenene `botte-8` til `botte-12` og mappene `C:/mattespill-b10`, `-b11` og `-b12` kan ryddes bort.
 3. Små ting som kan tas senere: et kart nummer to i hvert område, ett oppdrag per område fra en i landsbyen, mer musikk (Ninja Adventure på GitHub har bare fire spor) og drakter som ikke ligner på folk i landsbyen (dvergdrakt = Elsa, gresskar = Pelle, øgle = Tuva).
 
 ## Arbeidsregler

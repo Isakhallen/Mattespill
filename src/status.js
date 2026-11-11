@@ -32,9 +32,10 @@ export function lagStatus(knapper, lydPaa) {
   };
 
   return {
-    // Klassekoden på knappen, eller bare «Klassen» når eleven spiller alene.
-    klassen(kode) {
-      el('.klassen').textContent = kode ? `Klassen: ${kode}` : 'Klassen';
+    // Teksten på knappen «Klassen». null skjuler knappen.
+    klassen(tekst) {
+      el('.klassen').hidden = !tekst;
+      el('.klassen').textContent = tekst ?? '';
     },
     vis(s) {
       const n = nivaa(s.erfaring);

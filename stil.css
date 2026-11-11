@@ -37,7 +37,7 @@ body { font-family: "Trebuchet MS", "Segoe UI", sans-serif; color: #f1e9dc; }
 #kamp button .merke { width: calc(9 * var(--u)); margin-left: var(--u); vertical-align: middle; }
 .merke { image-rendering: pixelated; }
 
-body:has(#kamp:not([hidden])) :is(#hint, #status) { display: none; }
+body:has(#kamp:not([hidden])) :is(#hint, #status, #lapper) { display: none; }
 
 /* Statuslinja på kartet. */
 #status {
@@ -209,3 +209,13 @@ body:has(#kamp:not([hidden])) :is(#hint, #status) { display: none; }
 #klasserom input { width: 7em; margin-left: 10px; text-transform: uppercase; }
 #klasserom .om { margin: 14px 0 16px; font-size: 15px; line-height: 1.4; color: #a99fb0; }
 #klasserom .valg { display: flex; justify-content: center; gap: 14px; }
+
+/* Navnelapper over de andre i klassen. */
+#status { z-index: 1; }
+#lapper { position: fixed; inset: 0; pointer-events: none; }
+#lapper .lapp {
+  position: absolute; left: 0; top: 0; padding: 1px 6px; font-size: 13px; white-space: nowrap;
+  color: #f1e9dc; background: rgba(28, 24, 32, 0.75); border: 2px solid #6b5f73;
+}
+#lapper .lapp::after { content: ' · Nivå ' attr(data-nivaa); color: #a99fb0; }
+#lapper .lapp[hidden] { display: none; }
