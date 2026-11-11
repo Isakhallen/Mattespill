@@ -4,6 +4,7 @@ export default {
   navn: 'Vakta Ane',
   tegn: 'A',
   figur: 'knight_f',
+  porter: true, // forteller om nye porter (portNytt i src/folk.js)
   snakk: [
     'Porten bak meg går ned til kjelleren.',
     'Trykk B for å se angrepsboka di.',

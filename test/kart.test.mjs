@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { lesKart, vedSiden } from '../src/kart.js';
+import { existsSync } from 'node:fs';
 import { finnVei } from '../src/vei.js';
 import { KART, FORSTE, kartFor, lesKartData, UTGANG, utgang, inngangFra } from '../src/kartliste.js';
 import { STENGT } from '../src/data/ute.js';
@@ -120,4 +121,16 @@ test('verdenskartet: kjente tegn, porter med navn og eventyret starter i landsby
   const p = inngangFra(data, kart, 'kjelleren');
   assert.equal(p.tegn, '1');
   assert.deepEqual(vedSiden(kart, p), { x: p.x, y: p.y + 1 });
+});
+
+test('hvert kart har musikk, og låste porter har retning og en boss som finnes', () => {
+  for (const { data } of lest) {
+    const fil = `assets/lyd/${data.musikk ?? data.id}.ogg`;
+    assert.ok(existsSync(fil), `${data.id}: mangler ${fil}`);
+  }
+  for (const u of Object.values(lestFor('verden').data.innganger)) {
+    if (!u.krever) continue;
+    assert.ok(u.retning, `${u.navn} mangler retning`);
+    assert.ok(lest.some(({ kart }) => kart.merker.some((m) => fiendeFor(m.tegn)?.id === u.krever)));
+  }
 });

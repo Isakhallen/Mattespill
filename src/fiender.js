@@ -8,10 +8,22 @@ import tallslukeren from './data/fiender/tallslukeren.js';
 import tusse from './data/fiender/tusse.js';
 import skogogle from './data/fiender/skogogle.js';
 import halvdan from './data/fiender/halvdan.js';
+import myrzombie from './data/fiender/myrzombie.js';
+import giftblander from './data/fiender/giftblander.js';
+import myrkongen from './data/fiender/myrkongen.js';
+import isskjelett from './data/fiender/isskjelett.js';
+import snotusse from './data/fiender/snotusse.js';
+import isjotnen from './data/fiender/isjotnen.js';
+import glodebukk from './data/fiender/glodebukk.js';
+import askeskjelett from './data/fiender/askeskjelett.js';
+import lavakjempen from './data/fiender/lavakjempen.js';
 
 export const FIENDER = [
   goblin, imp, skjelett, ork, maskeork, sjaman, tallslukeren,
   tusse, skogogle, halvdan, // Skogen
+  myrzombie, giftblander, myrkongen, // Sumpen
+  isskjelett, snotusse, isjotnen, // Ishula
+  glodebukk, askeskjelett, lavakjempen, // Lavagrotta
 ];
 
 // Bokstaven i tekstkartet → fienden.

@@ -24,7 +24,7 @@ export default class Kamp extends Phaser.Scene {
     const { width, height } = this.scale;
     this.add.rectangle(0, 0, width, height, 0x0e0b10, 0.92).setOrigin(0);
     const flis = (x, rad, navn) =>
-      this.add.image(x * FLIS, 4 + rad * FLIS, 'dungeon', navn).setOrigin(0).setScale(S);
+      this.add.image(x * FLIS, 4 + rad * FLIS, 'dungeon', navn).setOrigin(0).setScale(S).setTint(d.farge ?? 0xffffff);
     for (let x = 0; x < width / FLIS; x++) {
       flis(x, 0, 'wall_top_mid');
       flis(x, 1, 'wall_mid');

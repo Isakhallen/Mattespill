@@ -8,6 +8,7 @@ import pelle from './data/folk/pelle.js';
 import goblins from './data/oppdrag/goblins.js';
 import pelleOppdrag from './data/oppdrag/pelle.js';
 import { TIPS } from './data/tips.js';
+import { portEtter } from './kartliste.js';
 
 export const FOLK = [dag, elsa, vilja, ane, tuva, pelle];
 export const OPPDRAG = [goblins, pelleOppdrag];
@@ -49,6 +50,7 @@ export function synlig(s, person, kart) {
 
 // Merket over hodet: 'utrop' for nytt oppdrag (og den som er borte), 'spor' når belønningen venter.
 export function folkemerke(s, person) {
+  if (portNytt(s, person)) return 'utrop';
   const mal = leterEtter(person);
   if (mal) return funnet(s, mal) ? null : 'utrop';
   const o = oppdragFra(person);
@@ -87,6 +89,16 @@ export function snakkOm(s, person) {
 }
 
 // Det personen sier ellers. «gang» er hvor mange ganger eleven har snakket med personen nå.
+// Den som har «porter», forteller om den nyeste porten som er åpen, til helten har vært der.
+export function portNytt(s, person) {
+  if (!person.porter) return null;
+  for (const id of [...(s.bosser ?? [])].reverse()) {
+    const u = portEtter(id);
+    if (u && !s.sett.includes(u.kart)) return `Porten til ${u.navn} i ${u.retning} har åpnet seg! Pass deg der inne.`;
+  }
+  return null;
+}
+
 export function replikk(person, trinn, gang = 0) {
   if (person.tips) return `Et tips til deg:\n${TIPS[trinn] ?? TIPS[1]}`;
   return person.snakk[gang % person.snakk.length];

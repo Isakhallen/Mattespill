@@ -5,6 +5,7 @@ export default {
   nivaa: 4,
   farge: 0xa8e090, // grønn hule
   opp: 'verden',
+  musikk: 'verden', // assets/lyd/verden.ogg
   tekst: ['Røttene har vokst inn i hula.', 'Langt inne ler noen dypt: «Hø hø!»'],
   ruter: [
     '########################################',

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { FOLK, OPPDRAG, personFor, lesOppdrag, slaattFiende, synlig, folkemerke, snakkOm, replikk } from '../src/folk.js';
+import { FOLK, OPPDRAG, personFor, lesOppdrag, slaattFiende, synlig, folkemerke, snakkOm, replikk, portNytt } from '../src/folk.js';
 import { TIPS } from '../src/data/tips.js';
 import { MAKS_TRINN } from '../src/oppgaver.js';
 import { FIENDER } from '../src/fiender.js';
@@ -99,4 +99,20 @@ test('oppdragene lagres og rare verdier glemmes', () => {
   assert.deepEqual(lesOppdrag({ goblins: { steg: 'ny', antall: -4 } }), { goblins: { steg: 'ny', antall: 0 } });
   const s = lagSpiller({ oppdrag: { pelle: { steg: 'klar', antall: 0 } } });
   assert.deepEqual(lagSpiller(tilLagring(s)).oppdrag, { pelle: { steg: 'klar', antall: 0 } });
+});
+
+test('vakta forteller om den nyeste porten til helten har vært der', () => {
+  const ane = p('ane');
+  const s = lagSpiller({});
+  assert.equal(portNytt(s, ane), null);
+  s.bosser = ['tallslukeren'];
+  assert.match(portNytt(s, ane), /Skogen i vest/);
+  assert.equal(folkemerke(s, ane), 'utrop');
+  assert.equal(portNytt(s, p('dag')), null);
+  s.bosser.push('halvdan');
+  assert.match(portNytt(s, ane), /Sumpen/);
+  s.sett.push('sumpen');
+  assert.match(portNytt(s, ane), /Skogen/); // har ikke vært i Skogen ennå
+  s.sett.push('skogen');
+  assert.equal(portNytt(s, ane), null);
 });

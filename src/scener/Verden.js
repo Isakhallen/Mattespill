@@ -20,7 +20,7 @@ import { lastEffekter, spill, musikk, settLyd, lydPaa } from '../lyd.js';
 import { lagHeltekort } from '../heltekort.js';
 import { lagAngrepsbok } from '../angrepsbok.js';
 import { MAKS_ANGREP } from '../kamp.js';
-import { personFor, synlig, folkemerke, snakkOm, replikk, slaattFiende } from '../folk.js';
+import { personFor, synlig, folkemerke, snakkOm, replikk, portNytt, slaattFiende } from '../folk.js';
 import { lagMerker } from '../merker.js';
 import { lagOppgave, MAKS_TRINN } from '../oppgaver.js';
 import { oppdater } from '../tilpasning.js';
@@ -107,7 +107,7 @@ export default class Verden extends Phaser.Scene {
     this.heltekort ??= lagHeltekort();
     this.bok ??= lagAngrepsbok();
     this.butikken ??= lagButikk();
-    musikk(this, this.kartId);
+    musikk(this, this.kartData.musikk ?? this.kartId);
     this.status.vis(spiller);
     this.beskjed ??= lagBeskjed();
     this.bossSlaatt = false;
@@ -326,6 +326,8 @@ export default class Verden extends Phaser.Scene {
       }
       lagre();
       if (om.belonning) await this.belonn(om.belonning);
+    } else if (portNytt(spiller, p)) {
+      await this.beskjed.vis(portNytt(spiller, p), undefined, hvem);
     } else if (p.regn && !this.bakt) {
       await this.regn(p, hvem);
     } else {
@@ -519,6 +521,7 @@ export default class Verden extends Phaser.Scene {
     this.scene.launch('Kamp', {
       spiller,
       fiende,
+      farge: this.kartData.farge, // arenaen får områdets farge
       visning: this.kampvisning,
       oppgaverute: this.oppgaverute,
       oppgjor: (k) => this.oppgjor(fiende, k),

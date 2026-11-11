@@ -2,11 +2,14 @@ import verden from './data/kart/verden.js';
 import kjelleren from './data/kart/kjelleren.js';
 import dypet from './data/kart/dypet.js';
 import skogen from './data/kart/skogen.js';
+import sumpen from './data/kart/sumpen.js';
+import ishula from './data/kart/ishula.js';
+import lavagrotta from './data/kart/lavagrotta.js';
 import { lesKart } from './kart.js';
 import { STENGT } from './data/ute.js';
 
 // Alle kartene. Eventyret starter i det første.
-export const KART = [verden, kjelleren, dypet, skogen];
+export const KART = [verden, kjelleren, dypet, skogen, sumpen, ishula, lavagrotta];
 export const FORSTE = verden.id;
 export const kartFor = (id) => KART.find((k) => k.id === id) ?? null;
 

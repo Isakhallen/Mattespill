@@ -8,10 +8,10 @@ export default {
   nivaa: 1,
   innganger: {
     1: { navn: 'Kjelleren', kart: 'kjelleren' },
-    2: { navn: 'Skogen', kart: 'skogen', krever: 'tallslukeren' },
-    3: { navn: 'Sumpen' },
-    4: { navn: 'Ishula' },
-    5: { navn: 'Lavagrotta' },
+    2: { navn: 'Skogen', retning: 'vest', kart: 'skogen', krever: 'tallslukeren' },
+    3: { navn: 'Sumpen', retning: 'sørvest', kart: 'sumpen', krever: 'halvdan' },
+    4: { navn: 'Ishula', retning: 'nord', kart: 'ishula', krever: 'myrkongen' },
+    5: { navn: 'Lavagrotta', retning: 'sørøst', kart: 'lavagrotta', krever: 'isjotnen' },
   },
   ruter: [
     '########################################################',
