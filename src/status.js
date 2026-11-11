@@ -1,7 +1,7 @@
 import { nivaa, grense, maksLiv, MAKS_NIVAA } from './vekst.js';
 
 // Statuslinja øverst på kartet: nivå, liv, erfaring, gull og knappene.
-// knapper: { kort, bok, lyd, nyHelt }. «lyd» bytter lyden og gir true hvis den er på.
+// knapper: { kort, bok, klassen, lyd, nyHelt }. «lyd» bytter lyden og gir true hvis den er på.
 export function lagStatus(knapper, lydPaa) {
   const rot = document.createElement('div');
   rot.id = 'status';
@@ -12,6 +12,7 @@ export function lagStatus(knapper, lydPaa) {
     <span class="gull"><b>Gull</b><span class="sum"></span></span>
     <button type="button" class="kort">Heltekort</button>
     <button type="button" class="bok">Angrep</button>
+    <button type="button" class="klassen">Klassen</button>
     <button type="button" class="lyd"></button>
     <button type="button" class="nyHelt">Ny helt</button>`;
   const el = (velg) => rot.querySelector(velg);
@@ -31,6 +32,10 @@ export function lagStatus(knapper, lydPaa) {
   };
 
   return {
+    // Klassekoden på knappen, eller bare «Klassen» når eleven spiller alene.
+    klassen(kode) {
+      el('.klassen').textContent = kode ? `Klassen: ${kode}` : 'Klassen';
+    },
     vis(s) {
       const n = nivaa(s.erfaring);
       el('.nivaa').textContent = `${s.navn} · Nivå ${n}`;

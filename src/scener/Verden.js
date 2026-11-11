@@ -14,6 +14,8 @@ import { slett } from '../lagring.js';
 import { lagOppgaverute } from '../oppgaverute.js';
 import { lagKampvisning } from '../kampvisning.js';
 import { lagStatus } from '../status.js';
+import { lagKlasserom } from '../klasserom.js';
+import { nett, lagreNett } from '../nett.js';
 import { lagBeskjed } from '../beskjed.js';
 import { kjorOving } from '../oving.js';
 import { lastEffekter, spill, musikk, settLyd, lydPaa } from '../lyd.js';
@@ -99,11 +101,17 @@ export default class Verden extends Phaser.Scene {
       {
         kort: () => this.visKort(),
         bok: () => this.visBok(),
+        klassen: () => this.visKlasserom(),
         lyd: () => settLyd(this.game, !lydPaa()),
         nyHelt: () => this.nyHelt(),
       },
       settLyd(this.game),
     );
+    if (!this.klasserom) {
+      this.klasserom = lagKlasserom();
+      lagreNett(); // så navnet er det samme neste gang
+      this.status.klassen(nett.kode);
+    }
     this.heltekort ??= lagHeltekort();
     this.bok ??= lagAngrepsbok();
     this.butikken ??= lagButikk();
@@ -165,6 +173,16 @@ export default class Verden extends Phaser.Scene {
     lagre();
     this.status.vis(spiller);
     await this.beskjed.vis(ETTER_VALG);
+    this.slipp();
+  }
+
+  // Navnet klassen ser, og klassekoden.
+  async visKlasserom() {
+    if (this.opptatt) return;
+    this.stopp();
+    Object.assign(nett, await this.klasserom.vis(nett));
+    lagreNett();
+    this.status.klassen(nett.kode);
     this.slipp();
   }
 

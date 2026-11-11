@@ -1,4 +1,4 @@
-// Framgangen lagres i nettleseren (localStorage). Ingenting sendes noe sted.
+// Framgangen lagres i nettleseren (localStorage). Bare det klassen ser sendes (se nett.js).
 // Spillet skal tåle at lagringen mangler, er ødelagt eller ikke er lov.
 const NOKKEL = 'mattespill';
 export const VERSJON = 1;
@@ -50,5 +50,24 @@ export function skrivLyd(paa, lager) {
     (lager ?? globalThis.localStorage).setItem(LYD, paa ? 'paa' : 'av');
   } catch {
     // lyden virker likevel, men valget huskes ikke
+  }
+}
+
+// Navnet klassen ser og klassekoden lagres også for seg, så «Ny helt» ikke rører dem.
+const NETT = 'mattespill-nett';
+
+export function lesNett(lager) {
+  try {
+    return JSON.parse((lager ?? globalThis.localStorage).getItem(NETT));
+  } catch {
+    return null;
+  }
+}
+
+export function skrivNett(nett, lager) {
+  try {
+    (lager ?? globalThis.localStorage).setItem(NETT, JSON.stringify(nett));
+  } catch {
+    // virker likevel, men huskes ikke
   }
 }

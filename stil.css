@@ -54,33 +54,33 @@ body:has(#kamp:not([hidden])) :is(#hint, #status) { display: none; }
 #status .xp .maaler i { background: #e8c170; }
 #status .tall { margin-left: 6px; font-size: 13px; color: #a99fb0; }
 
-:is(#oppgave, #beskjed) {
+:is(#oppgave, #beskjed, #klasserom) {
   position: fixed; inset: 0; z-index: 2;
   display: flex; align-items: center; justify-content: center;
   background: rgba(10, 8, 12, 0.55);
 }
-:is(#oppgave, #beskjed)[hidden] { display: none; }
-:is(#oppgave, #beskjed) .rute {
+:is(#oppgave, #beskjed, #klasserom)[hidden] { display: none; }
+:is(#oppgave, #beskjed, #klasserom) .rute {
   width: min(560px, 90vw); padding: 18px 28px 14px; text-align: center;
   background: #2a2330; border: 4px solid #6b5f73;
   box-shadow: 0 0 0 4px #1c1820, 0 12px 40px #000;
 }
 #oppgave .topp, #oppgave .bunn { min-height: 1.2em; font-size: 14px; color: #a99fb0; }
-:is(#oppgave, #beskjed) .tekst { margin: 14px 0 18px; font-size: 28px; line-height: 1.3; }
+:is(#oppgave, #beskjed, #klasserom) .tekst { margin: 14px 0 18px; font-size: 28px; line-height: 1.3; }
 #oppgave .svarlinje { display: flex; justify-content: center; align-items: baseline; gap: 10px; font-size: 26px; }
-#oppgave input {
+:is(#oppgave, #klasserom) input {
   width: 5em; padding: 6px; font: inherit; text-align: center;
   color: inherit; background: #1c1820; border: 3px solid #6b5f73;
 }
-#oppgave input:focus { outline: none; border-color: #e8c170; }
+:is(#oppgave, #klasserom) input:focus { outline: none; border-color: #e8c170; }
 #oppgave .melding { min-height: 3.4em; margin: 14px 0 6px; font-size: 18px; line-height: 1.4; white-space: pre-line; }
 #oppgave .melding.rett { font-size: 26px; color: #9bd17a; }
 #oppgave .melding.feil { color: #f0c987; }
-:is(#oppgave, #beskjed) button {
+:is(#oppgave, #beskjed, #klasserom) button {
   margin-bottom: 12px; padding: 8px 28px; font: inherit; font-size: 20px;
   color: #1c1820; background: #e8c170; border: 0; cursor: pointer;
 }
-:is(#oppgave, #beskjed) button:focus { outline: 3px solid #f1e9dc; }
+:is(#oppgave, #beskjed, #klasserom) button:focus { outline: 3px solid #f1e9dc; }
 #beskjed .tekst { white-space: pre-line; }
 #beskjed .hvem { display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 22px; }
 #beskjed .hvem[hidden] { display: none; }
@@ -202,3 +202,10 @@ body:has(#kamp:not([hidden])) :is(#hint, #status) { display: none; }
 /* Ting-knappen i kampen, til høyre over angrepene. */
 #kamp .ting { position: absolute; right: 2%; top: 63%; width: calc(48 * var(--u)); }
 #kamp .ting[hidden] { display: none; }
+
+/* Spill med klassen: navnet og klassekoden. */
+#klasserom .navn { color: #e8c170; }
+#klasserom .kodelinje { display: block; margin: 10px 0 0; font-size: 22px; }
+#klasserom input { width: 7em; margin-left: 10px; text-transform: uppercase; }
+#klasserom .om { margin: 14px 0 16px; font-size: 15px; line-height: 1.4; color: #a99fb0; }
+#klasserom .valg { display: flex; justify-content: center; gap: 14px; }
