@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 const EDGE = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
-const URL0 = 'http://localhost:8031';
+const URL0 = process.env.URL ?? 'http://localhost:8031'; // URL=https://… tester nettsiden
 const PORT = 9333;
 const vent = (ms) => new Promise((r) => setTimeout(r, ms));
 const kode = 'TEST' + Math.floor(Math.random() * 9000 + 1000);
