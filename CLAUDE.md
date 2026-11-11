@@ -85,9 +85,9 @@ Læreren trenger ikke godkjenne hver bøtte. Bygg bøttene etter planen, test se
 
 ## Plan videre
 
-Bøtte 12 ble bygd i `C:/mattespill-b12` på grenen `botte-12-omrader` (bøtte 8–12), og `main` (der en annen økt hadde flettet inn bøtte 9) er flettet inn i den. `main` er flyttet fram lokalt, men ikke sendt til GitHub ennå.
+Bøtte 12 ble bygd i `C:/mattespill-b12` på grenen `botte-12-omrader` (bøtte 8–12), og `main` (der en annen økt hadde flettet inn bøtte 9) er flettet inn i den. Alt ligger i `main` og er sendt til GitHub.
 
-1. Send `main` til GitHub (`git push origin main`) når læreren vil at nettsida skal oppdateres. Grenene `botte-8` til `botte-12` og mappene `C:/mattespill-b10`, `-b11` og `-b12` kan ryddes bort etterpå.
+1. Grenene `botte-8` til `botte-12` og mappene `C:/mattespill-b10`, `-b11` og `-b12` kan ryddes bort etterpå.
 2. Bøtte 13 (Online) starter ikke før læreren har avklart personvern med skolen.
 3. Små ting som kan tas senere: et kart nummer to i hvert område, ett oppdrag per område fra en i landsbyen, mer musikk (Ninja Adventure på GitHub har bare fire spor) og drakter som ikke ligner på folk i landsbyen (dvergdrakt = Elsa, gresskar = Pelle, øgle = Tuva).
 
